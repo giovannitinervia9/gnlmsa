@@ -438,42 +438,57 @@ make_map_function <- function(lower, upper){
 
 
 
-#' Sample new value of parameters
+#' Sample new parameter values
 #'
-#' @param par The precedent values of the parameters.
-#' @param v The variance-covariance matrix used to sample `eps`.
-#' @param mult A numerical vector to multiply `eps`.
-#' @param npar A numerical vector indicating the number of parameters.
+#' This function samples new parameter values using a multivariate normal distribution,
+#' based on previous values and a variance-covariance matrix. If sampling with mvtnorm::rmvnorm fails,
+#' it falls back to independent sampling using stats::rnorm.
 #'
-#' @return A numerical vector with the new values of the parameters.
+#' @param par Numeric vector containing the previous parameter values.
+#' @param v Square symmetric variance-covariance matrix used to sample errors.
+#' @param mult Numeric vector to multiply the sampled errors. Can be a single value
+#'   (applied to all parameters) or a vector of the same length as `par`. Default is 1.
+#' @param npar Number of parameters. Default is `length(par)`.
+#'
+#' @return Numeric vector containing the new parameter values.
 #' @export
 #' @importFrom stats rnorm
+#' @importFrom mvtnorm rmvnorm
+#'
 #' @examples
+#' # Define initial parameters and their bounds
 #' par <- c(0, 2, .2)
 #' lower <- c(-Inf, 0, -1)
 #' upper <- c(Inf, Inf, 1)
+#'
+#' # Create mapping functions to handle parameter bounds
 #' map_functions <- make_map_function(lower, upper)
 #' map <- map_functions$map
 #' invert <- map_functions$invert
 #' jacobian <- map_functions$jacobian
-
+#'
+#' # Map parameters to unbounded space
 #' mapped_pars <- map(par)
+#'
+#' # Calculate Jacobian adjustment for covariance matrix based on delta method
 #' j <- diag(jacobian(par))
-
 #' v <- diag(1e-06, length(par))
-
-#' mapped_v <- j%*%v%*%t(j)
+#' mapped_v <- j %*% v %*% t(j)
+#'
+#' # Define step size multipliers for different parameters
 #' mult <- c(3, 1, .2)
-
+#'
+#' # Sample new parameters in unbounded space
 #' new_par_mapped <- sample_par(par = mapped_pars, v = mapped_v, mult = mult)
+#'
+#' # Map parameters back to original constrained space
 #' invert(new_par_mapped)
+#'
 sample_par <- function(par, v, mult = 1, npar = length(par)){
-
   if(nrow(v) != ncol(v)) stop("v must be a square matrix")
   if(!isSymmetric(v)) stop("v must be a symmetric matrix")
   if(nrow(v) != npar) stop("dimension of variance-covariance matrix and par must coincide")
   if(length(mult) != 1 & length(mult) != npar) stop("mult must be of dimension 1 or npar")
-
   eps <- tryCatch(c(mvtnorm::rmvnorm(1, sigma = v)),
                   error = function(e) {
                     stats::rnorm(npar, mean = 0, sd = sqrt(diag(v)))
@@ -481,7 +496,6 @@ sample_par <- function(par, v, mult = 1, npar = length(par)){
   )
   par + mult*eps
 }
-
 
 
 

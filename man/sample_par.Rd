@@ -2,38 +2,55 @@
 % Please edit documentation in R/helper_functions.R
 \name{sample_par}
 \alias{sample_par}
-\title{Sample new value of parameters}
+\title{Sample new parameter values}
 \usage{
 sample_par(par, v, mult = 1, npar = length(par))
 }
 \arguments{
-\item{par}{The precedent values of the parameters.}
+\item{par}{Numeric vector containing the previous parameter values.}
 
-\item{v}{The variance-covariance matrix used to sample \code{eps}.}
+\item{v}{Square symmetric variance-covariance matrix used to sample errors.}
 
-\item{mult}{A numerical vector to multiply \code{eps}.}
+\item{mult}{Numeric vector to multiply the sampled errors. Can be a single value
+(applied to all parameters) or a vector of the same length as \code{par}. Default is 1.}
 
-\item{npar}{A numerical vector indicating the number of parameters.}
+\item{npar}{Number of parameters. Default is \code{length(par)}.}
 }
 \value{
-A numerical vector with the new values of the parameters.
+Numeric vector containing the new parameter values.
 }
 \description{
-Sample new value of parameters
+This function samples new parameter values using a multivariate normal distribution,
+based on previous values and a variance-covariance matrix. If sampling with mvtnorm::rmvnorm fails,
+it falls back to independent sampling using stats::rnorm.
 }
 \examples{
+# Define initial parameters and their bounds
 par <- c(0, 2, .2)
 lower <- c(-Inf, 0, -1)
 upper <- c(Inf, Inf, 1)
+
+# Create mapping functions to handle parameter bounds
 map_functions <- make_map_function(lower, upper)
 map <- map_functions$map
 invert <- map_functions$invert
 jacobian <- map_functions$jacobian
+
+# Map parameters to unbounded space
 mapped_pars <- map(par)
+
+# Calculate Jacobian adjustment for covariance matrix based on delta method
 j <- diag(jacobian(par))
 v <- diag(1e-06, length(par))
-mapped_v <- j\%*\%v\%*\%t(j)
+mapped_v <- j \%*\% v \%*\% t(j)
+
+# Define step size multipliers for different parameters
 mult <- c(3, 1, .2)
+
+# Sample new parameters in unbounded space
 new_par_mapped <- sample_par(par = mapped_pars, v = mapped_v, mult = mult)
+
+# Map parameters back to original constrained space
 invert(new_par_mapped)
+
 }
