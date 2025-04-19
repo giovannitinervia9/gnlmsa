@@ -12,7 +12,7 @@ X typically represents the data (can be a vector or a matrix),
 and theta is the parameter vector for which the Jacobian will be computed.}
 }
 \value{
-A function with signature function(X, theta) that computes the Jacobian matrix
+A function with signature \verb{function(X, theta)} that computes the Jacobian matrix
 of f with respect to theta at the given values. Each row of the resulting Jacobian
 corresponds to an element of the output vector, and each column corresponds to
 a parameter in theta.

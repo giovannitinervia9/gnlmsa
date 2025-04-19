@@ -7,7 +7,7 @@
 make_hessian(f)
 }
 \arguments{
-\item{f}{A function with signature f(X, theta) that returns a numeric value.
+\item{f}{A function with signature \code{f(X, theta)} that returns a numeric value.
 X typically represents the data (can be a vector or a matrix),
 and theta is the parameter vector for which the Hessian will be computed.}
 }

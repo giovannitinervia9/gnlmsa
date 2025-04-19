@@ -2,39 +2,58 @@
 % Please edit documentation in R/helper_functions.R
 \name{map_interval}
 \alias{map_interval}
-\title{Maps open intervals to real line}
+\title{Maps values between open intervals and the real line}
 \usage{
 map_interval(x, lower, upper, inverse = FALSE, derivative = FALSE)
 }
 \arguments{
-\item{x}{a numerical vector of values to map to the real line or to take bake to the open intervals.}
+\item{x}{a numerical vector of values to map. When \code{inverse = FALSE}, values must be strictly
+between \code{lower} and \code{upper}. When \code{inverse = TRUE}, values can be any real number.}
 
 \item{lower}{a numerical vector containing the lower bounds of the open intervals.}
 
-\item{upper}{a numerical vector containing the upper bounds of the open intervals.}
+\item{upper}{a numerical vector containing the upper bounds of the open intervals.
+Must be greater than the corresponding \code{lower} values.}
 
-\item{inverse}{logical indicating whether to map from the open intervals to the real line (default, \code{inverse = FALSE}) or whether to map from the real line to the open intervals.}
+\item{inverse}{logical indicating whether to map from the open intervals to the real line
+(default, \code{inverse = FALSE}) or from the real line to the open intervals (\code{inverse = TRUE}).}
 
-\item{derivative}{logical indicating whether to return the derivative of the map function.}
+\item{derivative}{logical indicating whether to return the derivative of the mapping function
+with respect to x. Only applicable when \code{inverse = FALSE}.}
 }
 \value{
-a numerical vector containing the mapped values or the derivative.
+A numerical vector containing the mapped values or the derivative values.
 }
 \description{
-Maps open intervals to real line
+This function implements a bijective transformation between an open interval \verb{(lower, upper)}
+and the real line using a logit-type transformation.
+}
+\details{
+Vectors \code{lower} and \code{upper} are recycled to match the length of \code{x} if necessary.
+The forward mapping (default, \code{inverse = FALSE}) is \deqn{\log\left(\dfrac{x-\texttt{lower}}{\texttt{upper}-x}\right)}
+and the inverse mapping (\code{inverse = TRUE}) is \deqn{\dfrac{\texttt{lower}+\texttt{upper}\exp(x)}{1+\exp(x)}}
+
+When \code{derivative = TRUE}, the function returns the derivative of the forward mapping which is
+\deqn{\dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}
 }
 \examples{
-# Create a numerical vector
-x <- seq(from = 0.01, to = 0.99, length = 10)
+# Basic usage: map from (0, 1) to R
+x <- seq(from = 0.1, to = 0.9, length = 10)
 lower <- 0
 upper <- 1
-
-# map from (0, 1) to R
 y <- map_interval(x, lower, upper)
+y
 
-# map back from R to (0, 1)
-map_interval(y, lower, upper, inverse = TRUE)
+# Map back from R to (0, 1)
+x_recovered <- map_interval(y, lower, upper, inverse = TRUE)
+all.equal(x, x_recovered)  # Should be TRUE
 
-# derivative
+# Calculate the derivative
 map_interval(x, lower, upper, derivative = TRUE)
+
+# Using different intervals
+map_interval(c(1.5, 2.5), lower = 1, upper = 3)
+
+# Multiple intervals with vectorized lower and upper bounds
+map_interval(c(0.2, 2.5), lower = c(0, 1), upper = c(1, 3))
 }

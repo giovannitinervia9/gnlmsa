@@ -15,7 +15,7 @@
 #'   X typically represents the data (can be a vector or a matrix),
 #'   and theta is the parameter vector for which the Jacobian will be computed.
 #'
-#' @return A function with signature function(X, theta) that computes the Jacobian matrix
+#' @return A function with signature `function(X, theta)` that computes the Jacobian matrix
 #'   of f with respect to theta at the given values. Each row of the resulting Jacobian
 #'   corresponds to an element of the output vector, and each column corresponds to
 #'   a parameter in theta.
@@ -53,7 +53,7 @@ make_jacobian <- function(f) function(X, theta) {
 #' with respect to its parameter vector. The returned function evaluates the Hessian
 #' at specified data points and parameter values.
 #'
-#' @param f A function with signature f(X, theta) that returns a numeric value.
+#' @param f A function with signature `f(X, theta)` that returns a numeric value.
 #'   X typically represents the data (can be a vector or a matrix),
 #'   and theta is the parameter vector for which the Hessian will be computed.
 #'
@@ -102,32 +102,53 @@ make_hessian <- function(f) function(X, theta) {
 
 
 
-#' Maps open intervals to real line
+#' Maps values between open intervals and the real line
 #'
-#' @param x a numerical vector of values to map to the real line or to take bake to the open intervals.
+#' This function implements a bijective transformation between an open interval `(lower, upper)`
+#' and the real line using a logit-type transformation.
+#' @param x a numerical vector of values to map. When `inverse = FALSE`, values must be strictly
+#'   between `lower` and `upper`. When `inverse = TRUE`, values can be any real number.
 #' @param lower a numerical vector containing the lower bounds of the open intervals.
 #' @param upper a numerical vector containing the upper bounds of the open intervals.
-#' @param inverse logical indicating whether to map from the open intervals to the real line (default, `inverse = FALSE`) or whether to map from the real line to the open intervals.
-#' @param derivative logical indicating whether to return the derivative of the map function.
+#'   Must be greater than the corresponding `lower` values.
+#' @param inverse logical indicating whether to map from the open intervals to the real line
+#'   (default, `inverse = FALSE`) or from the real line to the open intervals (`inverse = TRUE`).
+#' @param derivative logical indicating whether to return the derivative of the mapping function
+#'   with respect to x. Only applicable when `inverse = FALSE`.
 #'
-#' @return a numerical vector containing the mapped values or the derivative.
+#' @details
+#' Vectors `lower` and `upper` are recycled to match the length of `x` if necessary.
+#' The forward mapping (default, `inverse = FALSE`) is \deqn{\log\left(\dfrac{x-\texttt{lower}}{\texttt{upper}-x}\right)}
+#' and the inverse mapping (`inverse = TRUE`) is \deqn{\dfrac{\texttt{lower}+\texttt{upper}\exp(x)}{1+\exp(x)}}
+#'
+#' When `derivative = TRUE`, the function returns the derivative of the forward mapping which is
+#' \deqn{\dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}
+#'
+#' @return A numerical vector containing the mapped values or the derivative values.
 #' @export
 #'
 #' @examples
-#' # Create a numerical vector
-#' x <- seq(from = 0.01, to = 0.99, length = 10)
+#' # Basic usage: map from (0, 1) to R
+#' x <- seq(from = 0.1, to = 0.9, length = 10)
 #' lower <- 0
 #' upper <- 1
-#'
-#' # map from (0, 1) to R
 #' y <- map_interval(x, lower, upper)
+#' y
 #'
-#' # map back from R to (0, 1)
-#' map_interval(y, lower, upper, inverse = TRUE)
+#' # Map back from R to (0, 1)
+#' x_recovered <- map_interval(y, lower, upper, inverse = TRUE)
+#' all.equal(x, x_recovered)  # Should be TRUE
 #'
-#' # derivative
+#' # Calculate the derivative
 #' map_interval(x, lower, upper, derivative = TRUE)
-map_interval <- function(x, lower, upper, inverse = FALSE, derivative = FALSE){
+#'
+#' # Using different intervals
+#' map_interval(c(1.5, 2.5), lower = 1, upper = 3)
+#'
+#' # Multiple intervals with vectorized lower and upper bounds
+#' map_interval(c(0.2, 2.5), lower = c(0, 1), upper = c(1, 3))
+map_interval <- function(x, lower, upper, inverse = FALSE, derivative = FALSE) {
+  if (any(lower >= upper)) stop("lower must be less than upper")
   if (derivative) {
     (upper - lower)/((x - lower)*(upper - x))
   }
@@ -144,30 +165,64 @@ map_interval <- function(x, lower, upper, inverse = FALSE, derivative = FALSE){
 
 
 
-#' Map the positive line to the real line
+#' Maps values between half-open intervals and the real line
 #'
-#' @param x a numerical vector of values to map to the real line or to take back to the positive line.
-#' @param inverse logical indicating whether to map from the positive line to the real line (default, `inverse = FALSE`) or whether to map from the real line to the positive line (`inverse = TRUE`).
-#' @param lower value of the lower bound in order to map from \eqn{(\texttt{lower}, \infty) \rightarrow \mathbb{R}}. `lower` could also be a negative value. Default is 0.
-#' @param derivative logical indicating whether to return the derivative of the map function.
+#' This function implements a bijective transformation between a half-open interval `(lower, Inf)`
+#' and the real line using a logarithmic transformation.
 #'
-#' @return a numerical vector containing the mapped values or the derivative.
+#' @param x a numerical vector of values to map. When `inverse = FALSE`, values must be strictly
+#'   greater than `lower`. When `inverse = TRUE`, values can be any real number.
+#' @param lower a numerical value representing the lower bound of the half-open interval.
+#'   Can be any real number (positive, zero, or negative). Default is 0.
+#' @param inverse logical indicating whether to map from the half-open interval to the real line
+#'   (default, `inverse = FALSE`) or from the real line to the half-open interval (`inverse = TRUE`).
+#' @param derivative logical indicating whether to return the derivative of the mapping function
+#'   with respect to x. Only applicable when `inverse = FALSE`.
+#'
+#' @details
+#' Despite the function name `map_positive()`, this function can map any half-open interval of the form
+#' `(lower, Inf)` to the real line, where `lower` can be any real number.
+#'
+#' The forward mapping (default, `inverse = FALSE`) is \deqn{\log(x - \texttt{lower})}
+#' and the inverse mapping (`inverse = TRUE`) is \deqn{\texttt{lower} + \exp(x)}
+#'
+#' When `derivative = TRUE`, the function returns the derivative of the forward mapping which is
+#' \deqn{\dfrac{1}{x - \texttt{lower}}}
+#'
+#' @return A numerical vector containing the mapped values or the derivative values.
 #' @export
 #'
 #' @examples
-#' # (0, inf) to R
+#' # Map from (0, Inf) to R
 #' x <- 1:5
 #' y <- map_positive(x)
-#' map_positive(y, inverse = TRUE)
+#' y
 #'
-#' # (a, Inf) to R
+#' # Map back from R to (0, Inf)
+#' x_recovered <- map_positive(y, inverse = TRUE)
+#' all.equal(x, x_recovered)  # Should be TRUE
 #'
+#' # Map from (1, Inf) to R
 #' x <- 2:6
 #' lower <- 1
 #' y <- map_positive(x, lower = lower)
-#' map_positive(y, inverse = TRUE, lower = lower)
+#' y
 #'
-#' # derivative
+#' # Map back from R to (1, Inf)
+#' x_recovered <- map_positive(y, inverse = TRUE, lower = lower)
+#' all.equal(x, x_recovered)  # Should be TRUE
+#'
+#' # Using a negative lower bound: map from (-5, Inf) to R
+#' x <- seq(-4, 10, by = 2)
+#' lower <- -5
+#' y <- map_positive(x, lower = lower)
+#' y
+#'
+#' # Map back from R to (-5, Inf)
+#' x_recovered <- map_positive(y, inverse = TRUE, lower = lower)
+#' all.equal(x, x_recovered)  # Should be TRUE
+#'
+#' # Calculate the derivative for the forward mapping
 #' x <- 1:5
 #' map_positive(x, derivative = TRUE)
 map_positive <- function(x, lower = 0, inverse = FALSE, derivative = FALSE){
@@ -182,34 +237,68 @@ map_positive <- function(x, lower = 0, inverse = FALSE, derivative = FALSE){
 }
 
 
-
 #-------------------------------------------------------------------------------
 
 
 
-#' Map the negative line to the real line
+#' Maps values between half-open intervals and the real line
 #'
-#' @param x a numerical vector of values to map to the real line or to take back to the negative line.
-#' @param inverse logical indicating whether to map from the negative line to the real line (default, `inverse = FALSE`) or whether to map from the real line to the negative line (`inverse = TRUE`).
-#' @param upper value of the upper bound in order to map from \eqn{(-\infty, \texttt{upper}) \rightarrow \mathbb{R}}. `upper` could also be a positive value. Default is 0.
-#' @param derivative logical indicating whether to return the derivative of the map function.
+#' This function implements a bijective transformation between a half-open interval `(-Inf, upper)`
+#' and the real line using a logarithmic transformation.
 #'
-#' @return a numerical vector containing the mapped values or the derivative.
+#' @param x a numerical vector of values to map. When `inverse = FALSE`, values must be strictly
+#'   less than `upper`. When `inverse = TRUE`, values can be any real number.
+#' @param upper a numerical value representing the upper bound of the half-open interval.
+#'   Can be any real number (positive, zero, or negative). Default is 0.
+#' @param inverse logical indicating whether to map from the half-open interval to the real line
+#'   (default, `inverse = FALSE`) or from the real line to the half-open interval (`inverse = TRUE`).
+#' @param derivative logical indicating whether to return the derivative of the mapping function
+#'   with respect to x. Only applicable when `inverse = FALSE`.
+#'
+#' @details
+#' This function maps any half-open interval of the form `(-Inf, upper)` to the real line, where
+#' `upper` can be any real number.
+#'
+#' The forward mapping (default, `inverse = FALSE`) is \deqn{\log(\texttt{upper} - x)}
+#' and the inverse mapping (`inverse = TRUE`) is \deqn{\texttt{upper} - \exp(x)}
+#'
+#' When `derivative = TRUE`, the function returns the derivative of the forward mapping which is
+#' \deqn{-\dfrac{1}{\texttt{upper} - x}}
+#'
+#' @return A numerical vector containing the mapped values or the derivative values.
 #' @export
 #'
 #' @examples
-#' # (-Inf, 0) to R
+#' # Map from (-Inf, 0) to R
 #' x <- -(5:1)
 #' y <- map_negative(x)
-#' map_negative(y, inverse = TRUE)
+#' y
 #'
-#' # (-Inf, a) to R
+#' # Map back from R to (-Inf, 0)
+#' x_recovered <- map_negative(y, inverse = TRUE)
+#' all.equal(x, x_recovered)  # Should be TRUE
+#'
+#' # Map from (-Inf, 1) to R
 #' x <- -(6:2)
 #' upper <- 1
 #' y <- map_negative(x, upper = upper)
-#' map_negative(y, inverse = TRUE, upper = upper)
+#' y
 #'
-#' # derivative
+#' # Map back from R to (-Inf, 1)
+#' x_recovered <- map_negative(y, inverse = TRUE, upper = upper)
+#' all.equal(x, x_recovered)  # Should be TRUE
+#'
+#' # Using a negative upper bound: map from (-Inf, -3) to R
+#' x <- seq(-10, -4, by = 1)
+#' upper <- -3
+#' y <- map_negative(x, upper = upper)
+#' y
+#'
+#' # Map back from R to (-Inf, -3)
+#' x_recovered <- map_negative(y, inverse = TRUE, upper = upper)
+#' all.equal(x, x_recovered)  # Should be TRUE
+#'
+#' # Calculate the derivative for the forward mapping
 #' x <- -(5:1)
 #' map_negative(x, derivative = TRUE)
 map_negative <- function(x, upper = 0, inverse = FALSE, derivative = FALSE){
@@ -228,46 +317,85 @@ map_negative <- function(x, upper = 0, inverse = FALSE, derivative = FALSE){
 
 
 
-#' Helper function to create a function to map parameters from constrained parameter spaces to the real line
+#' Create mapping functions between constrained parameter spaces and the real line
 #'
-#' @param lower a numerical vector containing the lower bounds. There must be an element for each parameter of the model.
-#' @param upper a numerical vector containing the upper bounds. There must be an element for each parameter of the model.
+#' This function generates a set of transformation functions that map parameters from various constrained spaces
+#' to the real line and vice versa. It automatically identifies the appropriate transformation for each parameter
+#' based on the provided bounds.
 #'
-#' @return a list with three functions:
-#'  - `map()`: function that maps from the constrained space to the real line.
-#'  - `invert()`: inverse of `map()` that maps back from the real line to the constrained space.
-#'  - `jacobian()`: jacobian of `map()`.
+#' @param lower a numerical vector containing the lower bounds for each parameter.
+#'   Use `-Inf` for unbounded below parameters.
+#' @param upper a numerical vector containing the upper bounds for each parameter.
+#'   Use `Inf` for unbounded above parameters.
+#'
+#' @details
+#' The function automatically selects the appropriate transformation for each parameter based on its bounds:
+#'
+#' 1. For parameters with finite bounds `(lower[i], upper[i])`, [map_interval()] is used.
+#' 2. For parameters bounded only below `(lower[i], Inf)`, [map_positive()] is used.
+#' 3. For parameters bounded only above `(-Inf, upper[i])`, [map_negative()] is used.
+#' 4. For completely unbounded parameters `(-Inf, Inf)`, the `identity` function is used.
+#'
+#' The `map()` function transforms the constrained parameters to unconstrained values on the real line.
+#' The `invert()` function performs the inverse transformation from the real line back to the constrained space.
+#' The `jacobian()` function returns the derivatives of the transformation for each parameter.
+#'
+#' @return A list containing three functions:
+#'   \describe{
+#'     \item{`map(par)`}{A function that maps parameters from the constrained space to the real line.}
+#'     \item{`invert(par)`}{A function that maps parameters from the real line back to the constrained space.}
+#'     \item{`jacobian(par)`}{A function that returns the derivative of the transformation for each parameter.}
+#'   }
+#'   All three functions expect a numeric vector `par` of the same length as `lower` and `upper`.
 #'
 #' @export
 #'
 #' @examples
-#'
+#' # Create mapping functions for parameters with different constraints
 #' lower <- c(-Inf, 0, -1)
 #' upper <- c(Inf, Inf, 1)
 #'
+#' # Interpretation:
+#' # - First parameter: unbounded (-Inf, Inf)
+#' # - Second parameter: bounded below (0, Inf)
+#' # - Third parameter: bounded on both sides (-1, 1)
+#'
 #' map_functions <- make_map_function(lower, upper)
 #'
+#' # Extract the mapping functions
 #' map <- map_functions$map
 #' invert <- map_functions$invert
 #' jacobian <- map_functions$jacobian
 #'
+#' # Define parameter values in the constrained space
 #' x <- c(0, 3, 0.2)
-#' map(x)
-#' invert(map(x))
-#' x - invert(map(x))
-#' jacobian(x)
+#'
+#' # Map to unconstrained space
+#' y <- map(x)
+#' y
+#'
+#' # Map back to constrained space
+#' x_recovered <- invert(y)
+#' x_recovered
+#'
+#' # Verify roundtrip accuracy
+#' x - x_recovered
+#' all.equal(x, x_recovered)
+#'
+#' # Calculate the Jacobian at point x
+#' j <- jacobian(x)
+#' j
 make_map_function <- function(lower, upper){
-
   if (length(lower) != length(upper)) {
     stop("lower and upper must be of the same length")
   }
 
-  npar <- length(lower)
+  if (any(lower >= upper)) stop("lower must be less than upper")
 
+  npar <- length(lower)
   f_string <- character(npar)
   f_string_inverse <- f_string
   j_string <- f_string
-
   for(i in 1:npar){
     if (is.infinite(lower[i]) & is.infinite(upper[i])) {
       f_string[i] <- f_string_inverse[i] <- paste0("identity(par[", deparse(i), "])")
@@ -279,9 +407,9 @@ make_map_function <- function(lower, upper){
       j_string[i] <- paste0("map_positive(par[", deparse(i), "], inverse = FALSE, derivative = TRUE, lower = ", deparse(lower[i]), ")")
     }
     else if (is.infinite(lower[i]) & !is.infinite(upper[i])) {
-      f_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, upper = ", deparse(lower[i]), ")")
-      f_string_inverse[i] <- paste0("map_negative(par[", deparse(i), "], inverse = TRUE, upper = ", deparse(lower[i]), ")")
-      j_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, derivative = TRUE, upper = ", deparse(lower[i]), ")")
+      f_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, upper = ", deparse(upper[i]), ")")
+      f_string_inverse[i] <- paste0("map_negative(par[", deparse(i), "], inverse = TRUE, upper = ", deparse(upper[i]), ")")
+      j_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, derivative = TRUE, upper = ", deparse(upper[i]), ")")
     }
     else if(!is.infinite(lower[i]) & !is.infinite(upper[i])){
       f_string[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = FALSE)")
@@ -289,28 +417,40 @@ make_map_function <- function(lower, upper){
       j_string[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = FALSE, derivative = TRUE)")
     }
   }
-
   map <- function(par) {
     code <- paste0("c(", paste(f_string, collapse = ", "), ")")
     eval(parse(text = code))
   }
-
   invert <- function(par) {
     code <- paste0("c(", paste(f_string_inverse, collapse = ", "), ")")
     eval(parse(text = code))
   }
-
   jacobian <- function(par) {
     code <- paste0("c(", paste(j_string, collapse = ", "), ")")
     eval(parse(text = code))
   }
-
   list(map = map, invert = invert, jacobian = jacobian)
 }
 
 
 
 #-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
