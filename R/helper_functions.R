@@ -438,7 +438,49 @@ make_map_function <- function(lower, upper){
 
 
 
+#' Sample new value of parameters
+#'
+#' @param par The precedent values of the parameters.
+#' @param v The variance-covariance matrix used to sample `eps`.
+#' @param mult A numerical vector to multiply `eps`.
+#' @param npar A numerical vector indicating the number of parameters.
+#'
+#' @return A numerical vector with the new values of the parameters.
+#' @export
+#' @importFrom stats rnorm
+#' @examples
+#' par <- c(0, 2, .2)
+#' lower <- c(-Inf, 0, -1)
+#' upper <- c(Inf, Inf, 1)
+#' map_functions <- make_map_function(lower, upper)
+#' map <- map_functions$map
+#' invert <- map_functions$invert
+#' jacobian <- map_functions$jacobian
 
+#' mapped_pars <- map(par)
+#' j <- diag(jacobian(par))
+
+#' v <- diag(1e-06, length(par))
+
+#' mapped_v <- j%*%v%*%t(j)
+#' mult <- c(3, 1, .2)
+
+#' new_par_mapped <- sample_par(par = mapped_pars, v = mapped_v, mult = mult)
+#' invert(new_par_mapped)
+sample_par <- function(par, v, mult = 1, npar = length(par)){
+
+  if(nrow(v) != ncol(v)) stop("v must be a square matrix")
+  if(!isSymmetric(v)) stop("v must be a symmetric matrix")
+  if(nrow(v) != npar) stop("dimension of variance-covariance matrix and par must coincide")
+  if(length(mult) != 1 & length(mult) != npar) stop("mult must be of dimension 1 or npar")
+
+  eps <- tryCatch(c(mvtnorm::rmvnorm(1, sigma = v)),
+                  error = function(e) {
+                    stats::rnorm(npar, mean = 0, sd = sqrt(diag(v)))
+                  }
+  )
+  par + mult*eps
+}
 
 
 
