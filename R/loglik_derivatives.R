@@ -61,7 +61,7 @@
 #'         f_mu, J_mu,
 #'         fam_gamma$mu.eta, fam_gamma$variance)
 grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
-  if(missing(J_mu)) J_mu <- makeJacobian(f_mu)
+  if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
   w <- mu.eta(eta)/variance(mu, phi)
   j <- J_mu(X, beta)
   drop(t(w*j)%*%(y - mu))
@@ -131,8 +131,8 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #'         f_mu, J_mu, H_mu,
 #'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance)
 hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance){
-  if(missing(J_mu)) J_mu <- makeJacobian(f_mu)
-  if(missing(H_mu)) H_mu <- makeHessian(f_mu)
+  if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
+  if(missing(H_mu)) H_mu <- make_hessian(f_mu)
 
   mu_eta <- mu.eta(eta)
 
@@ -243,6 +243,8 @@ hess <- function(h_mu, h_phi, h_mu_phi){
 #' @param par numerical vector containing the parameters to evaluate the `loglik()` function at. It contains the parameters for both the mean and dispersion component.
 #' @param npar_mu integer indicating the number of parameters of the mean component. It is used in order to differentiate between parameters for mean and dispersion component in `par`.
 #' @param loglik a loglikelihood function to evaluate as created my a `gnlm_family()` function.
+#' @param f_mu function with signature `f(X, theta)` to compute the non linear predictor where `X` is the matrix containing the covariates and `theta` is the vector of parameters both of the mean component.
+#' @param f_phi function with signature `f(Z, gamma)` to compute the non linear predictor where `Z` is the matrix containing the covariates and `gamma` is the vector of parameters both of the dispersion component.
 #' @param linkinv_mu inverse-link function for the mean component as created by [make_link()].
 #' @param linkinv_phi inverse-link function for the dispersion component as created by [make_link()].
 #'
@@ -288,8 +290,9 @@ hess <- function(h_mu, h_phi, h_mu_phi){
 #' # compute log_loss
 #' par <- c(beta, gamma)
 #' npar_mu <- length(beta)
-#' log_loss(y, X, Z, par, npar_mu, fam_gamma$loglik, fam_gamma$linkinv_mu, fam_gamma$linkinv_phi)
-log_loss <- function(y, X, Z, par, npar_mu, loglik, linkinv_mu, linkinv_phi){
+#' log_loss(y, X, Z, par, npar_mu, fam_gamma$loglik,
+#'          f_mu, f_phi, fam_gamma$linkinv_mu, fam_gamma$linkinv_phi)
+log_loss <- function(y, X, Z, par, npar_mu, loglik, f_mu, f_phi, linkinv_mu, linkinv_phi){
   beta <- par[1:npar_mu]
   gamma <- par[(npar_mu + 1):length(par)]
   mu <- linkinv_mu(f_mu(X, beta))

@@ -4,7 +4,7 @@
 \alias{log_loss}
 \title{Compute minus log-likelihood for given values of parameters and a given log-likelihood function of Generalized Non-Linear Models}
 \usage{
-log_loss(y, X, Z, par, npar_mu, loglik, linkinv_mu, linkinv_phi)
+log_loss(y, X, Z, par, npar_mu, loglik, f_mu, f_phi, linkinv_mu, linkinv_phi)
 }
 \arguments{
 \item{y}{numerical vector of response variable.}
@@ -18,6 +18,10 @@ log_loss(y, X, Z, par, npar_mu, loglik, linkinv_mu, linkinv_phi)
 \item{npar_mu}{integer indicating the number of parameters of the mean component. It is used in order to differentiate between parameters for mean and dispersion component in \code{par}.}
 
 \item{loglik}{a loglikelihood function to evaluate as created my a \code{gnlm_family()} function.}
+
+\item{f_mu}{function with signature \code{f(X, theta)} to compute the non linear predictor where \code{X} is the matrix containing the covariates and \code{theta} is the vector of parameters both of the mean component.}
+
+\item{f_phi}{function with signature \code{f(Z, gamma)} to compute the non linear predictor where \code{Z} is the matrix containing the covariates and \code{gamma} is the vector of parameters both of the dispersion component.}
 
 \item{linkinv_mu}{inverse-link function for the mean component as created by \code{\link[=make_link]{make_link()}}.}
 
@@ -68,5 +72,6 @@ y <- rgamma(n, phi, phi/mu)
 # compute log_loss
 par <- c(beta, gamma)
 npar_mu <- length(beta)
-log_loss(y, X, Z, par, npar_mu, fam_gamma$loglik, fam_gamma$linkinv_mu, fam_gamma$linkinv_phi)
+log_loss(y, X, Z, par, npar_mu, fam_gamma$loglik,
+         f_mu, f_phi, fam_gamma$linkinv_mu, fam_gamma$linkinv_phi)
 }
