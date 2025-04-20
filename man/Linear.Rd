@@ -31,30 +31,29 @@ Returns a list of Hessian matrices, one for each observation in \code{X}
 }
 }
 \description{
-This function creates a linear function of the form \eqn{f(X, \theta) = X\theta}
-and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
+This function creates a linear function and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
 }
 \details{
 The linear function implemented here has the following form:
-\deqn{f(X, \theta) = X\theta}
+\deqn{f(x_i, \theta) = x_i^{\intercal}\theta}
 
 Where:
 \itemize{
-\item \eqn{X} is a matrix of covariates, with each row representing an observation
+\item \eqn{x_i^{\intercal}} is the \eqn{i}-th row vector of the matrix of covariates \eqn{X}, with each row representing an observation
 and each column representing a covariate
 \item \eqn{\theta} is a vector of coefficients
 \item The function returns a vector of linear combinations, one for each row of \eqn{X}
 }
 
 The Jacobian (first derivatives) matrix has the form:
-\deqn{J_{ij} = \dfrac{\partial y}{\partial \theta_j} =  X_{ij}}
+\deqn{J_{ij} = \dfrac{\partial y_i}{\partial \theta_j} =  x_{ij}}
 
 Where:
 \itemize{
-\item \eqn{X_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
+\item \eqn{x_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
 }
 
-The Hessian (second derivatives) is a zero matrix of dimension \eqn{k \times k} where \eqn{k} is the number of columns of the \eqn{X} matrix.
+The Hessian (second derivatives) is a zero matrix of dimension \eqn{k \times k} where \eqn{k} is the number of columns of \eqn{X}.
 }
 \examples{
 # Create the exponential function

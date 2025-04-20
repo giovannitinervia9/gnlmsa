@@ -31,37 +31,36 @@ Returns a list of Hessian matrices, one for each observation in \code{X}
 }
 }
 \description{
-This function creates an exponential function of the form \eqn{f(X, \theta) = \exp(X\theta)}
-and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
+This function creates an exponential function and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
 }
 \details{
 The exponential function implemented here has the following form:
-\deqn{f(X, \theta) = \exp(X\theta)}
+\deqn{f(x_i, \theta) = \exp(x_i^\intercal \theta)}
 
 Where:
 \itemize{
-\item \eqn{X} is a matrix of covariates, with each row representing an observation
+\item \eqn{x_i^{\intercal}} is the \eqn{i}-th row vector of the matrix of covariates \eqn{X}, with each row representing an observation
 and each column representing a covariate
 \item \eqn{\theta} is a vector of coefficients
 \item The function returns a vector of exponential values, one for each row of \eqn{X}
 }
 
-The Jacobian (first derivatives) matrix has the form:
-\deqn{J_{ij} = \dfrac{\partial y}{\partial \theta_j} =  y_i X_{ij}}
+The Jacobian matrix has the form:
+\deqn{J_{ij} = \dfrac{\partial y_i}{\partial \theta_j} =  y_i x_{ij}}
 
 Where:
 \itemize{
 \item \eqn{y_i} is the output from the exponential function for observation \eqn{i}
-\item \eqn{X_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
+\item \eqn{x_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
 }
 
-The Hessian (second derivatives) for the generic \eqn{i}-th observation has the sctructure:
-\deqn{H_{jl} = H_{lj} = \dfrac{\partial^2y}{\partial \theta_j \partial \theta_l} = y_i \cdot X_{ij} \cdot X_{il}}
+The Hessian matrix for the generic \eqn{i}-th observation has the sctructure:
+\deqn{H_{jl} = H_{lj} = \dfrac{\partial^2y_i}{\partial \theta_j \partial \theta_l} = y_i x_{ij} x_{il}}
 
 Where:
 \itemize{
 \item \eqn{y_i} is the output from the exponential function for the \eqn{i}-th observation
-\item \eqn{X_{ij}} and \eqn{X_{il}} are values of covariates \eqn{j} and \eqn{l} for the \eqn{i}-th observation
+\item \eqn{x_{ij}} and \eqn{x_{il}} are values of covariates \eqn{j} and \eqn{l} for the \eqn{i}-th observation
 }
 }
 \examples{

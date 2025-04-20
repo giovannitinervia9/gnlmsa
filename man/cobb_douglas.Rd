@@ -39,12 +39,12 @@ between inputs and output levels.
 }
 \details{
 The Cobb-Douglas production function has the following general form:
-\deqn{f(X, \theta) = \theta_0 \prod_{j=1}^k X_j^{\theta_{j}}}
+\deqn{f(x_i, \theta) = \theta_0 \prod_{j=1}^k x_{ij}^{\intercal \theta_{j}}}
 
 Where:
 \itemize{
-\item \eqn{X} is a matrix of input factors, with each row representing an observation
-and each column representing an input factor
+\item \eqn{x_i^{\intercal}} is the \eqn{i}-th row vector of the matrix of input factors \eqn{X}, with each row representing an observation
+and each column representing a input factor
 \item \eqn{k} is the number of input factors
 \item \eqn{\theta_0} is a scale parameter (efficiency parameter)
 \item \eqn{\theta_{j}} are the elasticity parameters for each input factor
@@ -52,19 +52,20 @@ and each column representing an input factor
 }
 
 The Jacobian (first derivatives) matrix has the form:
-\deqn{J_{i1} = \dfrac{\partial y}{\partial \theta_0} = \dfrac{y}{\theta_0}}
-\deqn{J_{ij} = \dfrac{\partial y}{\partial \theta_j} =  y \log(X_{ij}) \text{ for } j = 1, \ldots, k}
+\deqn{J_{i1} = \dfrac{\partial y_i}{\partial \theta_0} = \dfrac{y_i}{\theta_0}}
+\deqn{J_{ij} = \dfrac{\partial y_i}{\partial \theta_j} =  y_i \log(x_{ij}) \text{ for } j = 1, \ldots, k}
 
 Where:
 \itemize{
+\item \eqn{x_{ij}} is the value of input factor \eqn{j} for the \eqn{i}-th observation
 \item \eqn{y} is the output from the Cobb-Douglas function
 \item \eqn{k} is the number of input factors
 }
 
 The Hessian (second derivatives) matrix for the \eqn{i}-th observation has the form:
-\deqn{H_{11} = \dfrac{\partial^2 y}{\partial ^2 \theta_0} = 0}
-\deqn{H_{1j} = H_{j,1} = \dfrac{\partial ^2y}{\partial \theta_0 \partial \theta_j} = \dfrac{y}{\theta_0} \log(X_{j}) \text{ for } j = 1, \ldots, k}
-\deqn{H_{jl} = H_{l,j} = \dfrac{\partial ^2 y}{\partial \theta_j \partial \theta_l} = y \log(X_{j}) \log(X_{l}) \text{ for } j,l = 1, \ldots, k}
+\deqn{H_{11} = \dfrac{\partial^2 y_i}{\partial ^2 \theta_0} = 0}
+\deqn{H_{1j} = H_{j,1} = \dfrac{\partial ^2y_i}{\partial \theta_0 \partial \theta_j} = \dfrac{y_i}{\theta_0} \log(x_{ij}) \text{ for } j = 1, \ldots, k}
+\deqn{H_{jl} = H_{l,j} = \dfrac{\partial ^2 y_i}{\partial \theta_j \partial \theta_l} = y_i \log(x_{ij}) \log(x_{il}) \text{ for } j,l = 1, \ldots, k}
 }
 \examples{
 # Create the Cobb-Douglas function
