@@ -2,12 +2,12 @@
 % Please edit documentation in R/families.R
 \name{print.family_gnlmsa}
 \alias{print.family_gnlmsa}
-\title{Print function}
+\title{Print method for \code{family_gnlmsa} objects}
 \usage{
 \method{print}{family_gnlmsa}(x, ...)
 }
 \arguments{
-\item{x}{A family_gnlmsa object}
+\item{x}{A \code{family_gnlmsa} object}
 
 \item{...}{further arguments passed to methods.}
 }
@@ -15,7 +15,7 @@
 Details about the family definition and the family object.
 }
 \description{
-Print function
+Print method for \code{family_gnlmsa} objects
 }
 \examples{
 gamma_fam <- gnlmsa_Gamma()

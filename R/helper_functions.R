@@ -43,6 +43,7 @@ make_jacobian <- function(f) function(X, theta) {
 }
 
 
+
 #-------------------------------------------------------------------------------
 
 
@@ -235,6 +236,7 @@ map_positive <- function(x, lower = 0, inverse = FALSE, derivative = FALSE){
     log(x - lower)
   }
 }
+
 
 
 #-------------------------------------------------------------------------------

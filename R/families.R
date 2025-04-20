@@ -5,9 +5,9 @@
 
 
 
-#' Print function
+#' Print method for `family_gnlmsa` objects
 #'
-#' @param x A family_gnlmsa object
+#' @param x A `family_gnlmsa` object
 #' @param ... further arguments passed to methods.
 #'
 #' @return Details about the family definition and the family object.
@@ -22,6 +22,7 @@ print.family_gnlmsa <- function(x, ...){
   cat("Link function for dispersion:", x$link_phi, "\n\n")
   invisible(x)
 }
+
 
 
 #-------------------------------------------------------------------------------
@@ -158,7 +159,7 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
     phi*log(phi) - lgamma(phi) + phi*(log(y) - log(mu)- y/mu) - log(y)
   }
 
-  grad_phi <- function(y, Z, gamma, f_phi, J_phi, phi, vi, mu, phi.vi){
+  grad_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, phi.vi){
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
     w <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y/mu)*phi.vi(vi)
     j <- J_phi(Z, gamma)
@@ -166,7 +167,7 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
   }
 
 
-  hess_phi <- function(y, Z, gamma, f_phi, J_phi, H_phi, phi, vi, mu, phi.vi, phi2.vi2){
+  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi, phi.vi, phi2.vi2){
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
     if(missing(H_phi)) H_phi <- make_hessian(f_phi)
 
@@ -184,8 +185,10 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 
   }
 
-  hess_mu_phi <- function(y, X, Z, beta, gamma, f_mu, J_mu, f_phi, J_phi,
-                          mu, eta, phi, vi, mu.eta, phi.vi){
+  hess_mu_phi <- function(y, X, Z, beta, gamma,
+                          mu, eta, phi, vi,
+                          f_mu, J_mu, f_phi, J_phi,
+                          mu.eta, phi.vi){
     if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
     w <- ((y - mu)/mu^2)*mu.eta(eta)*phi.vi(vi)
