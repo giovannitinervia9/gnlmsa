@@ -9,6 +9,7 @@ sa_control(
   compute_v = floor(iterations/10),
   initial_temperature = 100,
   final_temperature = 1,
+  restart_if_stuck = floor(iterations * 0.33),
   save_history = FALSE
 )
 }
@@ -20,6 +21,8 @@ sa_control(
 \item{initial_temperature}{initial temperature of the algorithm.}
 
 \item{final_temperature}{final temperature of the algorithm.}
+
+\item{restart_if_stuck}{how many iterations wait before restarting from last best parameters value if the algorithm stucks.}
 
 \item{save_history}{whether to save full history of the algorithm.}
 }

@@ -11,6 +11,7 @@
 #' @param compute_v how many iterations wait in order to recompute variance-covariance matrix.
 #' @param initial_temperature initial temperature of the algorithm.
 #' @param final_temperature final temperature of the algorithm.
+#' @param restart_if_stuck how many iterations wait before restarting from last best parameters value if the algorithm stucks.
 #' @param save_history whether to save full history of the algorithm.
 #'
 #' @return a list containing the specified options.
@@ -19,6 +20,7 @@ sa_control <- function(iterations = 1000,
                        compute_v = floor(iterations/10),
                        initial_temperature = 100,
                        final_temperature = 1,
+                       restart_if_stuck = floor(iterations*0.33),
                        save_history = FALSE
 ) {
 
@@ -35,5 +37,6 @@ sa_control <- function(iterations = 1000,
        compute_v = compute_v,
        initial_temperature = initial_temperature,
        final_temperature = final_temperature,
+       restart_if_stuck = restart_if_stuck,
        save_history = save_history)
 }
