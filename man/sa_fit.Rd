@@ -35,7 +35,7 @@ sa_fit(
 
 \item{Z}{design matrix for the dispersion model.}
 
-\item{family}{a \code{family_gnlmsa} object.}
+\item{family}{a \code{\link{family_gnlmsa}} object.}
 
 \item{f_mu}{predictor function for the mean component.}
 

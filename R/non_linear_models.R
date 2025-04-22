@@ -81,11 +81,11 @@
 #'
 #' @export
 Linear <- function(){
-  f <- function(X, theta) drop(X%*%theta)
+  f <- function(X, theta) drop(as.matrix(X)%*%theta)
 
   J <- function(X, theta, y){
-    if(missing(y)) y <- Linear()$f(X, theta)
-    X
+    if(missing(y)) y <- Linear()$f(as.matrix(X), theta)
+    as.matrix(X)
   }
 
   H <- function(X, theta){
@@ -188,18 +188,18 @@ Linear <- function(){
 #'
 #' @export
 Exp <- function(){
-  f <- function(X, theta) drop(exp(X%*%theta))
+  f <- function(X, theta) drop(exp(as.matrix(X)%*%theta))
 
   J <- function(X, theta, y) {
     if (missing(y)) {
-      y <- Exp()$f(X, theta)
+      y <- Exp()$f(as.matrix(X), theta)
     }
-    y*X
+    y*as.matrix(X)
   }
 
   H <- function(X, theta, y) {
     if (missing(y)) {
-      y <- Exp()$f(X, theta)
+      y <- Exp()$f(as.matrix(X), theta)
     }
     k <- length(theta)
 
@@ -326,7 +326,7 @@ cobb_douglas <- function(){
     j <- cbind(y/theta[1])
 
     for(i in 1:ncol(X)){
-      j <- cbind(j, y*log(X[, i]))
+      j <- cbind(j, y*log(as.matrix(X)[, i]))
     }
     j
   }

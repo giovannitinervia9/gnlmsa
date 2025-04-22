@@ -57,7 +57,7 @@ sa_control <- function(iterations = 1000,
 #' @param y numerical vector of response values.
 #' @param X design matrix for the mean model.
 #' @param Z design matrix for the dispersion model.
-#' @param family a `family_gnlmsa` object.
+#' @param family a [`family_gnlmsa`] object.
 #' @param f_mu predictor function for the mean component.
 #' @param J_mu (optional) Jacobian of `f_mu` with respect to the parameters.
 #' @param H_mu (optional) Hessian of `f_mu` with respect to the parameters.
@@ -199,6 +199,9 @@ sa_fit <- function (y, X, Z, family,
   if(missing(H_mu)) H_mu <- make_hessian(f_mu)
   if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
   if(missing(H_phi)) H_phi <- make_hessian(f_phi)
+
+  X <- as.matrix(X)
+  Z <- as.matrix(Z)
 
   linkfun_mu <- family$linkfun_mu
   linkinv_mu <- family$linkinv_mu

@@ -5,6 +5,53 @@
 
 
 
+
+#' Family Objects for Generalized Non-Linear Models
+#'
+#' `family_gnlmsa` objects contain all information to fit Generalized Non-Linear Models assuming a particular distribution of the response variable.
+#'
+#'
+#' @param object the function `family_gnlmsa` accesses the family objects which are stored within objects created by `gnlmsa()`
+#' @param ... further arguments passed to methods.
+#'
+#' @returns An object of class `family_gnlmsa`, which is a list with elements:
+#' \describe{
+#'   \item{family}{Name of the family distribution}
+#'   \item{link_mu}{Name of the link function for \eqn{\mu}}
+#'   \item{linkfun_mu}{Function that transforms \eqn{\mu} to \eqn{\eta}}
+#'   \item{linkinv_mu}{Inverse link function that transforms \eqn{\eta} to \eqn{\mu}}
+#'   \item{mu.eta}{First derivative \eqn{\partial \mu / \partial \eta}}
+#'   \item{mu2.eta2}{Second derivative \eqn{\partial^2 \mu / \partial^2 \eta^2}}
+#'   \item{validmu}{Function to check if mean values are valid}
+#'
+#'   \item{link_phi}{Name of the link function for \eqn{\phi}}
+#'   \item{linkfun_phi}{Function that transforms \eqn{\phi} to \eqn{v}}
+#'   \item{linkinv_phi}{Inverse link function that transforms \eqn{v} to \eqn{\phi}}
+#'   \item{phi.vi}{First derivative \eqn{\partial \phi / \partial v}}
+#'   \item{phi2.vi2}{Second derivative \eqn{\partial^2 \phi / \partial^2 v^2}}
+#'   \item{validphi}{Function to check if dispersion values are valid}
+#'
+#'   \item{variance}{Function defining the mean-variance relationship as a function of both \eqn{\mu} and \eqn{\phi}}
+#'   \item{loglik}{Function to calculate the log-likelihood}
+#'   \item{grad_phi}{Function for gradient of log-likelihood with respect to dispersion parameters}
+#'   \item{hess_phi}{Function for Hessian matrix of log-likelihood with respect to dispersion parameters}
+#'   \item{hess_mu_phi}{Function for cross-derivative Hessian between mean and dispersion parameters}
+#' }
+#' @export
+#'
+#' @examples
+#' gnlmsa_Gamma(link_mu = "inverse", link_phi = "log")
+family_gnlmsa <- function (object, ...) {
+  UseMethod("family_gnlmsa")
+}
+
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
 #' Print method for `family_gnlmsa` objects
 #'
 #' @param x A `family_gnlmsa` object

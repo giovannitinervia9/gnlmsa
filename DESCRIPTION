@@ -12,3 +12,6 @@ RoxygenNote: 7.3.2
 Imports: 
     mvtnorm,
     numDeriv
+Depends: 
+    R (>= 2.10)
+LazyData: true
