@@ -190,7 +190,7 @@ sa_fit <- function (y, X, Z, family,
                     beta_start, lower_mu, upper_mu,
                     gamma_start, lower_phi, upper_phi,
                     mult, nsim, sa_control = sa_control(),
-                    expected, verbose) {
+                    expected = TRUE, verbose = TRUE) {
 
   if(length(lower_mu) != length(upper_mu)) stop("lower_mu and upper_mu must have the same length")
   if(length(lower_phi) != length(upper_phi)) stop("lower_phi and upper_phi must have the same length")

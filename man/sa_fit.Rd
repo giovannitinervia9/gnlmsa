@@ -24,8 +24,8 @@ sa_fit(
   mult,
   nsim,
   sa_control = sa_control(),
-  expected,
-  verbose
+  expected = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
