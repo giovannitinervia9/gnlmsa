@@ -368,7 +368,7 @@ sa_fit <- function (y, X, Z, family,
               phi = phi_best,
               iterations = sa_iterations,
               history = NULL,
-              control = sa_control_list)
+              control = sa_control)
 
   if (save_history) {
     out$history <- loglik_history
