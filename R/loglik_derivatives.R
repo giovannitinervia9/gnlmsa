@@ -87,6 +87,7 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #' @param mu.eta function which computes the derivative of the mean component with respect to the non linear predictor as created by [make_link()] function.
 #' @param mu2.eta2 function which computes the second derivative of the mean component with respect to the non linear predictor as created by [make_link()] function.
 #' @param variance function which computes the variance of the given family as a function of `mu` and `phi`.
+#' @param expected logical indicating whether to return the expected Hessian (default `expected = TRUE`) or the observed (`expected = FALSE`)
 #'
 #' @return a square symmetric matrix of dimension equal to the number of parameters for the mean component.
 #' @export
@@ -129,8 +130,13 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #'
 #' hess_mu(y, X, beta, mu, eta, phi,
 #'         f_mu, J_mu, H_mu,
-#'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance)
-hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance){
+#'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
+#'         expected = TRUE)
+#' hess_mu(y, X, beta, mu, eta, phi,
+#'         f_mu, J_mu, H_mu,
+#'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
+#'         expected = FALSE)
+hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance, expected = TRUE){
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
   if(missing(H_mu)) H_mu <- make_hessian(f_mu)
 
@@ -141,13 +147,15 @@ hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2
   w1 <- (mu_eta^2)/v
   h1 <- -crossprod(j, w1*j)
 
+  if (expected) {
+    return(h1)
+  } else {
+    w2 <- ((y - mu)/v)
+    h21 <- crossprod(j, w2*mu2.eta2(eta)*j)
 
-  w2 <- ((y - mu)/v)
-  h21 <- crossprod(j, w2*mu2.eta2(eta)*j)
-
-  h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*mu_eta, h = H_mu(X, beta)))
-  h1 + h21 + h22
-
+    h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*mu_eta, h = H_mu(X, beta)))
+    h1 + h21 + h22
+  }
 }
 
 

@@ -120,7 +120,7 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
   # create link for phi
   if (!is.character(linktemp_phi)) {
     linktemp_phi <- deparse(linktemp_phi)
-    }
+  }
   if (linktemp_phi %in% okLinks_phi) {
     stats_phi <- make_link(linktemp_phi)
   }
@@ -167,7 +167,7 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
   }
 
 
-  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi, phi.vi, phi2.vi2){
+  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi, phi.vi, phi2.vi2, expected = TRUE){
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
     if(missing(H_phi)) H_phi <- make_hessian(f_phi)
 
@@ -177,24 +177,38 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
     w1 <- (1/phi - trigamma(phi))*phi_vi^2
     h1 <- crossprod(j, w1*j)
 
-    w2 <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y/mu)
+    if (expected) {
+      return(h1)
+    } else {
+      w2 <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y/mu)
 
-    h21 <- crossprod(j, j*w2*phi2.vi2(vi))
-    h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*phi_vi, h = H_phi(Z, gamma)))
-    h1 + h21 + h22
-
+      h21 <- crossprod(j, j*w2*phi2.vi2(vi))
+      h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*phi_vi, h = H_phi(Z, gamma)))
+      h1 + h21 + h22
+    }
   }
 
   hess_mu_phi <- function(y, X, Z, beta, gamma,
                           mu, eta, phi, vi,
                           f_mu, J_mu, f_phi, J_phi,
-                          mu.eta, phi.vi){
-    if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
-    if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
-    w <- ((y - mu)/mu^2)*mu.eta(eta)*phi.vi(vi)
-    jmu <- J_mu(X, beta)
-    jphi <- J_phi(Z, gamma)
-    crossprod(w*jmu, jphi)
+                          mu.eta, phi.vi, expected = TRUE) {
+
+    if (expected) {
+      matrix(0, nrow = length(beta), ncol = length(gamma))
+    } else {
+      if (missing(J_mu)) {
+        J_mu <- make_jacobian(f_mu)
+      }
+      if (missing(J_phi)) {
+        J_phi <- make_jacobian(f_phi)
+      }
+      w <- ((y - mu)/mu^2)*mu.eta(eta)*phi.vi(vi)
+      jmu <- J_mu(X, beta)
+      jphi <- J_phi(Z, gamma)
+      crossprod(w*jmu, jphi)
+    }
+
+
   }
 
 

@@ -4,7 +4,21 @@
 \alias{hess_mu}
 \title{Compute hessian with respect to parameters of mean component for Generalized Non-Linear Models}
 \usage{
-hess_mu(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance)
+hess_mu(
+  y,
+  X,
+  beta,
+  mu,
+  eta,
+  phi,
+  f_mu,
+  J_mu,
+  H_mu,
+  mu.eta,
+  mu2.eta2,
+  variance,
+  expected = TRUE
+)
 }
 \arguments{
 \item{y}{numerical vector of response variable.}
@@ -30,6 +44,8 @@ hess_mu(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance)
 \item{mu2.eta2}{function which computes the second derivative of the mean component with respect to the non linear predictor as created by \code{\link[=make_link]{make_link()}} function.}
 
 \item{variance}{function which computes the variance of the given family as a function of \code{mu} and \code{phi}.}
+
+\item{expected}{logical indicating whether to return the expected Hessian (default \code{expected = TRUE}) or the observed (\code{expected = FALSE})}
 }
 \value{
 a square symmetric matrix of dimension equal to the number of parameters for the mean component.
@@ -75,5 +91,10 @@ y <- rgamma(n, phi, phi/mu)
 
 hess_mu(y, X, beta, mu, eta, phi,
         f_mu, J_mu, H_mu,
-        fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance)
+        fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
+        expected = TRUE)
+hess_mu(y, X, beta, mu, eta, phi,
+        f_mu, J_mu, H_mu,
+        fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
+        expected = FALSE)
 }
