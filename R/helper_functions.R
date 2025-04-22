@@ -488,7 +488,7 @@ make_map_function <- function(lower, upper){
 #'
 sample_par <- function(par, v, mult = 1, npar = length(par)){
   if(nrow(v) != ncol(v)) stop("v must be a square matrix")
-  if(!isSymmetric(v)) stop("v must be a symmetric matrix")
+  # if(!isSymmetric(v)) stop("v must be a symmetric matrix")
   if(nrow(v) != npar) stop("dimension of variance-covariance matrix and par must coincide")
   if(length(mult) != 1 & length(mult) != npar) stop("mult must be of dimension 1 or npar")
   eps <- tryCatch(c(mvtnorm::rmvnorm(1, sigma = v)),

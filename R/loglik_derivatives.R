@@ -231,9 +231,6 @@ hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2
 #' # build full hessian
 #' hess(h_mu, h_phi, h_mu_phi)
 hess <- function(h_mu, h_phi, h_mu_phi){
-  # if(expected){
-  #   h_mu_phi <- matrix(0, nrow(h_mu_phi), ncol(h_mu_phi))
-  # }
   rbind(cbind(h_mu, h_mu_phi), cbind(t(h_mu_phi), h_phi))
 }
 
