@@ -4,69 +4,51 @@
 \alias{map_positive}
 \title{Maps values between half-open intervals and the real line}
 \usage{
-map_positive(x, lower = 0, inverse = FALSE, derivative = FALSE)
+map_positive(
+  x,
+  lower = 0,
+  inverse = FALSE,
+  derivative = FALSE,
+  second_derivative = FALSE
+)
 }
 \arguments{
-\item{x}{a numerical vector of values to map. When \code{inverse = FALSE}, values must be strictly
+\item{x}{A numerical vector of values to map. When \code{inverse = FALSE}, values must be strictly
 greater than \code{lower}. When \code{inverse = TRUE}, values can be any real number.}
 
-\item{lower}{a numerical value representing the lower bound of the half-open interval.
-Can be any real number (positive, zero, or negative). Default is 0.}
+\item{lower}{A numerical value representing the lower bound of the half-open interval.
+Default is 0.}
 
-\item{inverse}{logical indicating whether to map from the half-open interval to the real line
-(default, \code{inverse = FALSE}) or from the real line to the half-open interval (\code{inverse = TRUE}).}
+\item{inverse}{Logical; if \code{TRUE}, maps from the real line to the half-open interval. Default is \code{FALSE}.}
 
-\item{derivative}{logical indicating whether to return the derivative of the mapping function
-with respect to x. Only applicable when \code{inverse = FALSE}.}
+\item{derivative}{Logical; if \code{TRUE}, returns the first derivative of the forward transformation.}
+
+\item{second_derivative}{Logical; if \code{TRUE}, returns the second derivative of the forward transformation.}
 }
 \value{
-A numerical vector containing the mapped values or the derivative values.
+A numeric vector of mapped values, first or second derivatives depending on arguments.
 }
 \description{
 This function implements a bijective transformation between a half-open interval \verb{(lower, Inf)}
 and the real line using a logarithmic transformation.
 }
 \details{
-Despite the function name \code{map_positive()}, this function can map any half-open interval of the form
-\verb{(lower, Inf)} to the real line, where \code{lower} can be any real number.
+Forward transformation:
+\deqn{f(x) = \log(x - \texttt{lower})}
 
-The forward mapping (default, \code{inverse = FALSE}) is \deqn{\log(x - \texttt{lower})}
-and the inverse mapping (\code{inverse = TRUE}) is \deqn{\texttt{lower} + \exp(x)}
+Inverse transformation:
+\deqn{f^{-1}(z) = \texttt{lower} + \exp(z)}
 
-When \code{derivative = TRUE}, the function returns the derivative of the forward mapping which is
-\deqn{\dfrac{1}{x - \texttt{lower}}}
+First derivative:
+\deqn{f'(x) = \dfrac{1}{x - \texttt{lower}}}
+
+Second derivative:
+\deqn{f''(x) = -\dfrac{1}{(x - \texttt{lower})^2}}
 }
 \examples{
-# Map from (0, Inf) to R
 x <- 1:5
-y <- map_positive(x)
-y
-
-# Map back from R to (0, Inf)
-x_recovered <- map_positive(y, inverse = TRUE)
-all.equal(x, x_recovered)  # Should be TRUE
-
-# Map from (1, Inf) to R
-x <- 2:6
-lower <- 1
-y <- map_positive(x, lower = lower)
-y
-
-# Map back from R to (1, Inf)
-x_recovered <- map_positive(y, inverse = TRUE, lower = lower)
-all.equal(x, x_recovered)  # Should be TRUE
-
-# Using a negative lower bound: map from (-5, Inf) to R
-x <- seq(-4, 10, by = 2)
-lower <- -5
-y <- map_positive(x, lower = lower)
-y
-
-# Map back from R to (-5, Inf)
-x_recovered <- map_positive(y, inverse = TRUE, lower = lower)
-all.equal(x, x_recovered)  # Should be TRUE
-
-# Calculate the derivative for the forward mapping
-x <- 1:5
+map_positive(x)
 map_positive(x, derivative = TRUE)
+map_positive(x, second_derivative = TRUE)
+map_positive(map_positive(x), inverse = TRUE)
 }

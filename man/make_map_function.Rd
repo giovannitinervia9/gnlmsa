@@ -18,9 +18,10 @@ A list containing three functions:
 \describe{
 \item{\code{map(par)}}{A function that maps parameters from the constrained space to the real line.}
 \item{\code{invert(par)}}{A function that maps parameters from the real line back to the constrained space.}
-\item{\code{jacobian(par)}}{A function that returns the derivative of the transformation for each parameter.}
+\item{\code{jacobian(par)}}{A function that returns the first derivative of the transformation for each parameter.}
+\item{\code{hessian(par)}}{A function that returns the second derivative of the trasformation for each parameter.}
 }
-All three functions expect a numeric vector \code{par} of the same length as \code{lower} and \code{upper}.
+All four functions expect a numeric vector \code{par} of the same length as \code{lower} and \code{upper}.
 }
 \description{
 This function generates a set of transformation functions that map parameters from various constrained spaces
@@ -38,7 +39,8 @@ The function automatically selects the appropriate transformation for each param
 
 The \code{map()} function transforms the constrained parameters to unconstrained values on the real line.
 The \code{invert()} function performs the inverse transformation from the real line back to the constrained space.
-The \code{jacobian()} function returns the derivatives of the transformation for each parameter.
+The \code{jacobian()} function returns the first derivatives of the transformation for each parameter.
+The \code{hessian()} function returns the second derivatives of the transformation.
 }
 \examples{
 # Create mapping functions for parameters with different constraints
@@ -56,6 +58,7 @@ map_functions <- make_map_function(lower, upper)
 map <- map_functions$map
 invert <- map_functions$invert
 jacobian <- map_functions$jacobian
+hessian <- map_functions$hessian
 
 # Define parameter values in the constrained space
 x <- c(0, 3, 0.2)
@@ -75,4 +78,8 @@ all.equal(x, x_recovered)
 # Calculate the Jacobian at point x
 j <- jacobian(x)
 j
+
+# Calculate the Hessian at point x
+h <- hessian(x)
+h
 }
