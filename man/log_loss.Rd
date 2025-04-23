@@ -2,36 +2,45 @@
 % Please edit documentation in R/loglik_derivatives.R
 \name{log_loss}
 \alias{log_loss}
-\title{Compute minus log-likelihood for given values of parameters and a given log-likelihood function of Generalized Non-Linear Models}
+\title{Compute the Negative Log-Likelihood for a Generalized Non-Linear Model}
 \usage{
 log_loss(y, X, Z, par, npar_mu, loglik, f_mu, f_phi, linkinv_mu, linkinv_phi)
 }
 \arguments{
-\item{y}{numerical vector of response variable.}
+\item{y}{Numeric vector of observed responses.}
 
-\item{X}{matrix containing the covariates for the mean component.}
+\item{X}{Numeric matrix of covariates for the mean component.}
 
-\item{Z}{matrix containing the covariates for the dispersion component.}
+\item{Z}{Numeric matrix of covariates for the dispersion component.}
 
-\item{par}{numerical vector containing the parameters to evaluate the \code{loglik()} function at. It contains the parameters for both the mean and dispersion component.}
+\item{par}{Numeric vector containing all model parameters. The first \code{npar_mu} elements are
+assumed to be associated with the mean component, and the remainder with the dispersion component.}
 
-\item{npar_mu}{integer indicating the number of parameters of the mean component. It is used in order to differentiate between parameters for mean and dispersion component in \code{par}.}
+\item{npar_mu}{Integer. Number of parameters associated with the mean component.}
 
-\item{loglik}{a loglikelihood function to evaluate as created my a \code{gnlm_family()} function.}
+\item{loglik}{Function that computes the observation-wise log-likelihood contributions, as provided by a \verb{gnlmsa_*()} family constructor.}
 
-\item{f_mu}{function with signature \code{f(X, theta)} to compute the non linear predictor where \code{X} is the matrix containing the covariates and \code{theta} is the vector of parameters both of the mean component.}
+\item{f_mu}{Function with signature \code{f(X, theta)} computing the nonlinear predictor for the mean component.}
 
-\item{f_phi}{function with signature \code{f(Z, gamma)} to compute the non linear predictor where \code{Z} is the matrix containing the covariates and \code{gamma} is the vector of parameters both of the dispersion component.}
+\item{f_phi}{Function with signature \code{f(Z, gamma)} computing the nonlinear predictor for the dispersion component.}
 
-\item{linkinv_mu}{inverse-link function for the mean component as created by \code{\link[=make_link]{make_link()}}.}
+\item{linkinv_mu}{Inverse link function for the mean component (e.g., from \code{\link[=make_link]{make_link()}}).}
 
-\item{linkinv_phi}{inverse-link function for the dispersion component as created by \code{\link[=make_link]{make_link()}}.}
+\item{linkinv_phi}{Inverse link function for the dispersion component.}
 }
 \value{
-numerical value of minus log-likelihood evaluated at given values of \code{par}.
+A single numeric value: the negative log-likelihood evaluated at the parameter vector \code{par}.
 }
 \description{
-Compute minus log-likelihood for given values of parameters and a given log-likelihood function of Generalized Non-Linear Models
+Evaluates the negative log-likelihood function for a Generalized Non-Linear Model (GNLM)
+given a parameter vector and a user-supplied log-likelihood function from a \code{family_gnlmsa} object.
+This function is typically used as an objective function in optimization routines.
+}
+\details{
+This function separates the full parameter vector \code{par} into \code{beta} (for the mean)
+and \code{gamma} (for the dispersion), computes the predicted mean and dispersion using the
+inverse link functions, and then evaluates the log-likelihood. The log-likelihood is returned with a
+negative sign for compatibility with minimization algorithms.
 }
 \examples{
 # create family object

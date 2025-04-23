@@ -2,22 +2,41 @@
 % Please edit documentation in R/loglik_derivatives.R
 \name{hess}
 \alias{hess}
-\title{Build full hessian of a Generalized Non-Linear model}
+\title{Construct the Full Hessian Matrix for a Generalized Non-Linear Model}
 \usage{
 hess(h_mu, h_phi, h_mu_phi)
 }
 \arguments{
-\item{h_mu}{hessian matrix for the mean component.}
+\item{h_mu}{Hessian matrix of the log-likelihood with respect to the parameters of the mean component.}
 
-\item{h_phi}{hessian matrix for the dispersion component.}
+\item{h_phi}{Hessian matrix of the log-likelihood with respect to the parameters of the dispersion component.}
 
-\item{h_mu_phi}{hessian matrix for the mean and dispersion component.}
+\item{h_mu_phi}{Cross-Hessian matrix of the log-likelihood with respect to mean and dispersion parameters.}
 }
 \value{
-a \eqn{(k + p) \times (k + p)} square symmetric matrix where \eqn{k} and \eqn{p} are the number of parameters for the mean component and the dispersion component respectively.
+A symmetric square matrix of dimension \eqn{(k + p) \times (k + p)}, where:
+\itemize{
+\item \eqn{k} is the number of parameters in the mean component,
+\item \eqn{p} is the number of parameters in the dispersion component.
+}
+The resulting matrix has the block structure:
+\deqn{
+\begin{bmatrix}
+H_{\beta \beta} & H_{\beta \gamma} \\
+H_{\beta \gamma}^\intercal & H_{\gamma \gamma}
+\end{bmatrix}
+}
 }
 \description{
-Build full hessian of a Generalized Non-Linear model
+Assembles the full Hessian matrix of the log-likelihood function for a Generalized Non-Linear Model (GNLM),
+by combining the individual Hessians of the mean and dispersion components along with their cross-derivatives.
+}
+\details{
+This function is useful for second-order optimization methods (e.g., Newton-Raphson),
+model diagnostics, or computing standard errors when both components of the model
+(mean and dispersion) are estimated jointly.
+
+All inputs must be compatible in dimension and properly computed; no internal checks are performed.
 }
 \examples{
 # create family object

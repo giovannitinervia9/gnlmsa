@@ -5,21 +5,31 @@
 
 
 
-#' Compute gradient with respect to parameters of mean component for Generalized Non-Linear Models
+#' Gradient with Respect to Mean Component Parameters in Generalized Non-Linear Models
 #'
-#' @param y numerical vector of response variable.
-#' @param X matrix containing the covariates for the mean component.
-#' @param beta parameters of the mean component.
-#' @param mu numerical vector containing the conditional mean of the response variable.
-#' @param eta numerical vector containing the non linear predictor of the response variable.
-#' @param phi numerical vector containing the conditional dispersion of the response variable.
-#' @param f_mu function with signature `f(X, theta)` to compute the non linear predictor where `X` is the matrix containing the covariates and `theta` is the vector of parameters both of the mean component.
-#' @param J_mu (optional) function to compute the jacobian of `f_mu()`. Should be a function with signature `J_mu(X, theta)` and should return a \eqn{n \times k} matrix where `n` is equal to `length(y)` and `k` is equal to the number of parameters of the mean component.
-#' @param mu.eta function which computes the derivative of the mean component with respect to the non linear predictor as created by [make_link()] function.
-#' @param variance function which computes the variance of the given family as a function of `mu` and `phi`.
+#' Computes the gradient of the log-likelihood with respect to the parameters of the mean component
+#' in a Generalized Non-Linear Model (GNLM), assuming the response variable belongs to an exponential family.
 #'
-#' @return a numerical vector of length equal to the number of parameters for the mean component.
-#' @export
+#' @param y Numeric vector of observed responses.
+#' @param X Numeric matrix of covariates for the mean component.
+#' @param beta Numeric vector of current values for the parameters of the mean component.
+#' @param mu Numeric vector of conditional means, typically obtained via the inverse link function applied to \code{eta}.
+#' @param eta Numeric vector of nonlinear predictors \eqn{\eta = \eta(X, \beta)}.
+#' @param phi Numeric vector of conditional dispersion values.
+#' @param f_mu A user-defined function of signature \code{f(X, theta)} returning the nonlinear predictor.
+#' @param J_mu Optional. A function to compute the Jacobian of \code{f_mu}, with signature \code{J_mu(X, theta)}.
+#'   Returns a \eqn{n \times k} matrix, where `n = length(y)` and `k = length(beta)`.
+#' @param mu.eta Function computing the derivative \eqn{\partial \mu / \partial \eta}, as returned by [make_link()].
+#' @param variance Function defining the variance of the distribution as a function of \code{mu} and \code{phi}.
+#'
+#' @return A numeric vector of length equal to the number of parameters in the mean component.
+#'
+#' @details
+#' This function evaluates the score vector (first derivative of the log-likelihood) with respect to
+#' the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that the appropriate
+#' variance and derivative functions are specified.
+#'
+#'
 #'
 #' @examples
 #' # create family object
@@ -73,24 +83,33 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 
 
 
-#' Compute hessian with respect to parameters of mean component for Generalized Non-Linear Models
+#' Hessian with Respect to Mean Component Parameters in Generalized Non-Linear Models
 #'
-#' @param y numerical vector of response variable.
-#' @param X matrix containing the covariates for the mean component.
-#' @param beta parameters of the mean component.
-#' @param mu numerical vector containing the conditional mean of the response variable.
-#' @param eta numerical vector containing the non linear predictor of the response variable.
-#' @param phi numerical vector containing the conditional dispersion of the response variable.
-#' @param f_mu function with signature `f(X, theta)` to compute the non linear predictor where `X` is the matrix containing the covariates and `theta` is the vector of parameters both of the mean component.
-#' @param J_mu (optional) function to compute the jacobian of `f_mu()`. Should be a function with signature `J_mu(X, theta)` and should return a \eqn{n \times k} matrix where `n` is equal to `length(y)` and `k` is equal to the number of parameters of the mean component.
-#' @param H_mu (optional) function to compute the hessian of `f_mu()`. Should be a function with signature `H_mu(X, theta)` and should return a list of \eqn{n} elements where `n` is equal to `length(y)` and each element should be the hessian of `f_mu()` computed at every row of `X`.
-#' @param mu.eta function which computes the derivative of the mean component with respect to the non linear predictor as created by [make_link()] function.
-#' @param mu2.eta2 function which computes the second derivative of the mean component with respect to the non linear predictor as created by [make_link()] function.
-#' @param variance function which computes the variance of the given family as a function of `mu` and `phi`.
-#' @param expected logical indicating whether to return the expected Hessian (default `expected = TRUE`) or the observed (`expected = FALSE`)
+#' Computes the Hessian matrix (second derivative of the log-likelihood) with respect to the parameters
+#' of the mean component in a Generalized Non-Linear Model (GNLM), assuming an exponential family distribution.
 #'
-#' @return a square symmetric matrix of dimension equal to the number of parameters for the mean component.
-#' @export
+#' @param y Numeric vector of observed responses.
+#' @param X Numeric matrix of covariates associated with the mean component.
+#' @param beta Numeric vector of current values for the mean component parameters.
+#' @param mu Numeric vector of conditional means, typically computed as the inverse link applied to \code{eta}.
+#' @param eta Numeric vector of nonlinear predictors \eqn{\eta = \eta(X, \beta)}.
+#' @param phi Numeric vector of conditional dispersion values.
+#' @param f_mu Function with signature \code{f(X, theta)} that computes the nonlinear predictor for the mean component.
+#' @param J_mu Optional. Function computing the Jacobian of \code{f_mu}; must return an \eqn{n \times k} matrix.
+#' @param H_mu Optional. Function computing the Hessian of \code{f_mu}; must return a list of \eqn{n} Hessian matrices,
+#'   one per observation.
+#' @param mu.eta Function computing \eqn{\partial \mu / \partial \eta}, as returned by [make_link()].
+#' @param mu2.eta2 Function computing \eqn{\partial^2 \mu / \partial^2 \eta^2}, as returned by [make_link()].
+#' @param variance Function returning the conditional variance of the response as a function of \code{mu} and \code{phi}.
+#' @param expected Logical. If \code{TRUE} (default), returns the expected Hessian.
+#'   If \code{FALSE}, returns the observed (empirical) Hessian.
+#'
+#' @return A square symmetric matrix of dimension equal to the number of parameters in the mean component.
+#'
+#' @details
+#' This function evaluates the hessian matrix (second derivative of the log-likelihood) with respect to
+#' the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that the appropriate
+#' variance and derivative functions are specified.
 #'
 #' @examples
 #' # create family object
@@ -164,14 +183,34 @@ hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2
 
 
 
-#' Build full hessian of a Generalized Non-Linear model
+#' Construct the Full Hessian Matrix for a Generalized Non-Linear Model
 #'
-#' @param h_mu hessian matrix for the mean component.
-#' @param h_phi hessian matrix for the dispersion component.
-#' @param h_mu_phi hessian matrix for the mean and dispersion component.
+#' Assembles the full Hessian matrix of the log-likelihood function for a Generalized Non-Linear Model (GNLM),
+#' by combining the individual Hessians of the mean and dispersion components along with their cross-derivatives.
 #'
-#' @return a \eqn{(k + p) \times (k + p)} square symmetric matrix where \eqn{k} and \eqn{p} are the number of parameters for the mean component and the dispersion component respectively.
-#' @export
+#' @param h_mu Hessian matrix of the log-likelihood with respect to the parameters of the mean component.
+#' @param h_phi Hessian matrix of the log-likelihood with respect to the parameters of the dispersion component.
+#' @param h_mu_phi Cross-Hessian matrix of the log-likelihood with respect to mean and dispersion parameters.
+#'
+#' @return A symmetric square matrix of dimension \eqn{(k + p) \times (k + p)}, where:
+#' \itemize{
+#'   \item \eqn{k} is the number of parameters in the mean component,
+#'   \item \eqn{p} is the number of parameters in the dispersion component.
+#' }
+#' The resulting matrix has the block structure:
+#' \deqn{
+#' \begin{bmatrix}
+#' H_{\beta \beta} & H_{\beta \gamma} \\
+#' H_{\beta \gamma}^\intercal & H_{\gamma \gamma}
+#' \end{bmatrix}
+#' }
+#'
+#' @details
+#' This function is useful for second-order optimization methods (e.g., Newton-Raphson),
+#' model diagnostics, or computing standard errors when both components of the model
+#' (mean and dispersion) are estimated jointly.
+#'
+#' All inputs must be compatible in dimension and properly computed; no internal checks are performed.
 #'
 #' @examples
 #' # create family object
@@ -240,21 +279,31 @@ hess <- function(h_mu, h_phi, h_mu_phi){
 
 
 
-#' Compute minus log-likelihood for given values of parameters and a given log-likelihood function of Generalized Non-Linear Models
+#' Compute the Negative Log-Likelihood for a Generalized Non-Linear Model
 #'
-#' @param y numerical vector of response variable.
-#' @param X matrix containing the covariates for the mean component.
-#' @param Z matrix containing the covariates for the dispersion component.
-#' @param par numerical vector containing the parameters to evaluate the `loglik()` function at. It contains the parameters for both the mean and dispersion component.
-#' @param npar_mu integer indicating the number of parameters of the mean component. It is used in order to differentiate between parameters for mean and dispersion component in `par`.
-#' @param loglik a loglikelihood function to evaluate as created my a `gnlm_family()` function.
-#' @param f_mu function with signature `f(X, theta)` to compute the non linear predictor where `X` is the matrix containing the covariates and `theta` is the vector of parameters both of the mean component.
-#' @param f_phi function with signature `f(Z, gamma)` to compute the non linear predictor where `Z` is the matrix containing the covariates and `gamma` is the vector of parameters both of the dispersion component.
-#' @param linkinv_mu inverse-link function for the mean component as created by [make_link()].
-#' @param linkinv_phi inverse-link function for the dispersion component as created by [make_link()].
+#' Evaluates the negative log-likelihood function for a Generalized Non-Linear Model (GNLM)
+#' given a parameter vector and a user-supplied log-likelihood function from a `family_gnlmsa` object.
+#' This function is typically used as an objective function in optimization routines.
 #'
-#' @return numerical value of minus log-likelihood evaluated at given values of `par`.
-#' @export
+#' @param y Numeric vector of observed responses.
+#' @param X Numeric matrix of covariates for the mean component.
+#' @param Z Numeric matrix of covariates for the dispersion component.
+#' @param par Numeric vector containing all model parameters. The first \code{npar_mu} elements are
+#'   assumed to be associated with the mean component, and the remainder with the dispersion component.
+#' @param npar_mu Integer. Number of parameters associated with the mean component.
+#' @param loglik Function that computes the observation-wise log-likelihood contributions, as provided by a `gnlmsa_*()` family constructor.
+#' @param f_mu Function with signature \code{f(X, theta)} computing the nonlinear predictor for the mean component.
+#' @param f_phi Function with signature \code{f(Z, gamma)} computing the nonlinear predictor for the dispersion component.
+#' @param linkinv_mu Inverse link function for the mean component (e.g., from [make_link()]).
+#' @param linkinv_phi Inverse link function for the dispersion component.
+#'
+#' @return A single numeric value: the negative log-likelihood evaluated at the parameter vector \code{par}.
+#'
+#' @details
+#' This function separates the full parameter vector \code{par} into \code{beta} (for the mean)
+#' and \code{gamma} (for the dispersion), computes the predicted mean and dispersion using the
+#' inverse link functions, and then evaluates the log-likelihood. The log-likelihood is returned with a
+#' negative sign for compatibility with minimization algorithms.
 #'
 #' @examples
 #' # create family object

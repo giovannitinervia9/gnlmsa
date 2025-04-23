@@ -2,7 +2,7 @@
 % Please edit documentation in R/loglik_derivatives.R
 \name{hess_mu}
 \alias{hess_mu}
-\title{Compute hessian with respect to parameters of mean component for Generalized Non-Linear Models}
+\title{Hessian with Respect to Mean Component Parameters in Generalized Non-Linear Models}
 \usage{
 hess_mu(
   y,
@@ -21,37 +21,45 @@ hess_mu(
 )
 }
 \arguments{
-\item{y}{numerical vector of response variable.}
+\item{y}{Numeric vector of observed responses.}
 
-\item{X}{matrix containing the covariates for the mean component.}
+\item{X}{Numeric matrix of covariates associated with the mean component.}
 
-\item{beta}{parameters of the mean component.}
+\item{beta}{Numeric vector of current values for the mean component parameters.}
 
-\item{mu}{numerical vector containing the conditional mean of the response variable.}
+\item{mu}{Numeric vector of conditional means, typically computed as the inverse link applied to \code{eta}.}
 
-\item{eta}{numerical vector containing the non linear predictor of the response variable.}
+\item{eta}{Numeric vector of nonlinear predictors \eqn{\eta = \eta(X, \beta)}.}
 
-\item{phi}{numerical vector containing the conditional dispersion of the response variable.}
+\item{phi}{Numeric vector of conditional dispersion values.}
 
-\item{f_mu}{function with signature \code{f(X, theta)} to compute the non linear predictor where \code{X} is the matrix containing the covariates and \code{theta} is the vector of parameters both of the mean component.}
+\item{f_mu}{Function with signature \code{f(X, theta)} that computes the nonlinear predictor for the mean component.}
 
-\item{J_mu}{(optional) function to compute the jacobian of \code{f_mu()}. Should be a function with signature \code{J_mu(X, theta)} and should return a \eqn{n \times k} matrix where \code{n} is equal to \code{length(y)} and \code{k} is equal to the number of parameters of the mean component.}
+\item{J_mu}{Optional. Function computing the Jacobian of \code{f_mu}; must return an \eqn{n \times k} matrix.}
 
-\item{H_mu}{(optional) function to compute the hessian of \code{f_mu()}. Should be a function with signature \code{H_mu(X, theta)} and should return a list of \eqn{n} elements where \code{n} is equal to \code{length(y)} and each element should be the hessian of \code{f_mu()} computed at every row of \code{X}.}
+\item{H_mu}{Optional. Function computing the Hessian of \code{f_mu}; must return a list of \eqn{n} Hessian matrices,
+one per observation.}
 
-\item{mu.eta}{function which computes the derivative of the mean component with respect to the non linear predictor as created by \code{\link[=make_link]{make_link()}} function.}
+\item{mu.eta}{Function computing \eqn{\partial \mu / \partial \eta}, as returned by \code{\link[=make_link]{make_link()}}.}
 
-\item{mu2.eta2}{function which computes the second derivative of the mean component with respect to the non linear predictor as created by \code{\link[=make_link]{make_link()}} function.}
+\item{mu2.eta2}{Function computing \eqn{\partial^2 \mu / \partial^2 \eta^2}, as returned by \code{\link[=make_link]{make_link()}}.}
 
-\item{variance}{function which computes the variance of the given family as a function of \code{mu} and \code{phi}.}
+\item{variance}{Function returning the conditional variance of the response as a function of \code{mu} and \code{phi}.}
 
-\item{expected}{logical indicating whether to return the expected Hessian (default \code{expected = TRUE}) or the observed (\code{expected = FALSE})}
+\item{expected}{Logical. If \code{TRUE} (default), returns the expected Hessian.
+If \code{FALSE}, returns the observed (empirical) Hessian.}
 }
 \value{
-a square symmetric matrix of dimension equal to the number of parameters for the mean component.
+A square symmetric matrix of dimension equal to the number of parameters in the mean component.
 }
 \description{
-Compute hessian with respect to parameters of mean component for Generalized Non-Linear Models
+Computes the Hessian matrix (second derivative of the log-likelihood) with respect to the parameters
+of the mean component in a Generalized Non-Linear Model (GNLM), assuming an exponential family distribution.
+}
+\details{
+This function evaluates the hessian matrix (second derivative of the log-likelihood) with respect to
+the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that the appropriate
+variance and derivative functions are specified.
 }
 \examples{
 # create family object

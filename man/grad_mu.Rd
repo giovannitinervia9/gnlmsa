@@ -2,36 +2,43 @@
 % Please edit documentation in R/loglik_derivatives.R
 \name{grad_mu}
 \alias{grad_mu}
-\title{Compute gradient with respect to parameters of mean component for Generalized Non-Linear Models}
+\title{Gradient with Respect to Mean Component Parameters in Generalized Non-Linear Models}
 \usage{
 grad_mu(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance)
 }
 \arguments{
-\item{y}{numerical vector of response variable.}
+\item{y}{Numeric vector of observed responses.}
 
-\item{X}{matrix containing the covariates for the mean component.}
+\item{X}{Numeric matrix of covariates for the mean component.}
 
-\item{beta}{parameters of the mean component.}
+\item{beta}{Numeric vector of current values for the parameters of the mean component.}
 
-\item{mu}{numerical vector containing the conditional mean of the response variable.}
+\item{mu}{Numeric vector of conditional means, typically obtained via the inverse link function applied to \code{eta}.}
 
-\item{eta}{numerical vector containing the non linear predictor of the response variable.}
+\item{eta}{Numeric vector of nonlinear predictors \eqn{\eta = \eta(X, \beta)}.}
 
-\item{phi}{numerical vector containing the conditional dispersion of the response variable.}
+\item{phi}{Numeric vector of conditional dispersion values.}
 
-\item{f_mu}{function with signature \code{f(X, theta)} to compute the non linear predictor where \code{X} is the matrix containing the covariates and \code{theta} is the vector of parameters both of the mean component.}
+\item{f_mu}{A user-defined function of signature \code{f(X, theta)} returning the nonlinear predictor.}
 
-\item{J_mu}{(optional) function to compute the jacobian of \code{f_mu()}. Should be a function with signature \code{J_mu(X, theta)} and should return a \eqn{n \times k} matrix where \code{n} is equal to \code{length(y)} and \code{k} is equal to the number of parameters of the mean component.}
+\item{J_mu}{Optional. A function to compute the Jacobian of \code{f_mu}, with signature \code{J_mu(X, theta)}.
+Returns a \eqn{n \times k} matrix, where \code{n = length(y)} and \code{k = length(beta)}.}
 
-\item{mu.eta}{function which computes the derivative of the mean component with respect to the non linear predictor as created by \code{\link[=make_link]{make_link()}} function.}
+\item{mu.eta}{Function computing the derivative \eqn{\partial \mu / \partial \eta}, as returned by \code{\link[=make_link]{make_link()}}.}
 
-\item{variance}{function which computes the variance of the given family as a function of \code{mu} and \code{phi}.}
+\item{variance}{Function defining the variance of the distribution as a function of \code{mu} and \code{phi}.}
 }
 \value{
-a numerical vector of length equal to the number of parameters for the mean component.
+A numeric vector of length equal to the number of parameters in the mean component.
 }
 \description{
-Compute gradient with respect to parameters of mean component for Generalized Non-Linear Models
+Computes the gradient of the log-likelihood with respect to the parameters of the mean component
+in a Generalized Non-Linear Model (GNLM), assuming the response variable belongs to an exponential family.
+}
+\details{
+This function evaluates the score vector (first derivative of the log-likelihood) with respect to
+the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that the appropriate
+variance and derivative functions are specified.
 }
 \examples{
 # create family object
