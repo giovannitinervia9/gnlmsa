@@ -108,6 +108,14 @@ gnlmsa <- function (y, X, Z, family,
   if(length(lower_mu) != length(upper_mu)) stop("lower_mu and upper_mu must have the same length")
   if(length(lower_phi) != length(upper_phi)) stop("lower_phi and upper_phi must have the same length")
 
+  if(any(beta_start <= lower_mu) | any(beta_start >= upper_mu)) {
+    stop("Starting values for beta are outside the lower and upper bounds defined.")
+  }
+
+  if(any(gamma_start <= lower_phi) | any(gamma_start >= upper_phi)) {
+    stop("Starting values for gamma are outside the lower and upper bounds defined.")
+  }
+
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
   if(missing(H_mu)) H_mu <- make_hessian(f_mu)
   if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
@@ -162,7 +170,9 @@ gnlmsa <- function (y, X, Z, family,
 
   if (!inherits(nr, "gnlmsa_fit")) {
     nr_failed <- TRUE
+    nr_better <- FALSE
     fit <- sa
+    warning("\nNewton-Raphson optimization failed to optimize log-likelihood function.\n Try to use more iterations for Simulated Annealing algorithm.")
   } else if (nr$loglik > sa$loglik) {
     fit <- nr
     nr_better <- nr_failed <- TRUE

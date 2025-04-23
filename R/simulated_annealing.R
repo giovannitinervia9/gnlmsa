@@ -329,6 +329,12 @@ sa_fit <- function (y, X, Z, family,
     l1 <- sum(loglik(y, mu1, phi1))
     delta <- l1 - l0
 
+    if (is.nan(delta)) {
+      iter_compute_v <- sa_iterations + 100
+      v <- diag(1e-06, npar)
+      next
+    }
+
     if (delta > 0) {
       par0_unc <- par1_unc
       l0 <- l1
