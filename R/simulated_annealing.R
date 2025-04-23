@@ -15,7 +15,7 @@
 #'
 #' @param iterations Integer. Total number of iterations for the Simulated Annealing algorithm.
 #' @param compute_v Integer. Frequency (in iterations) at which the variance-covariance matrix used
-#'   for proposal generation is updated. Default is every 10% of total iterations.
+#'   for proposal generation is updated. Default is every 30% of total iterations.
 #' @param initial_temperature Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.
 #' @param final_temperature Numeric. Final value of the temperature at which the cooling schedule stops.
 #' @param restart_if_stuck Integer. Number of consecutive iterations without improvement after which
@@ -31,10 +31,10 @@
 #'
 #' @export
 sa_control <- function(iterations = 1000,
-                       compute_v = floor(iterations/10),
+                       compute_v = floor(iterations*0.3),
                        initial_temperature = 100,
                        final_temperature = 1,
-                       restart_if_stuck = floor(iterations*0.33),
+                       restart_if_stuck = floor(iterations*0.3),
                        save_history = FALSE
 ) {
 

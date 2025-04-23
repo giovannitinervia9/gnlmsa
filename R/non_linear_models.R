@@ -83,8 +83,7 @@
 Linear <- function(){
   f <- function(X, theta) drop(as.matrix(X)%*%theta)
 
-  J <- function(X, theta, y){
-    if(missing(y)) y <- Linear()$f(as.matrix(X), theta)
+  J <- function(X, theta){
     as.matrix(X)
   }
 
@@ -187,37 +186,42 @@ Linear <- function(){
 #' hessian_list[[1]]  # Hessian matrix for the first observation
 #'
 #' @export
-Exp <- function(){
-  f <- function(X, theta) drop(exp(as.matrix(X)%*%theta))
-
-  J <- function(X, theta, y) {
-    if (missing(y)) {
-      y <- Exp()$f(as.matrix(X), theta)
-    }
-    y*as.matrix(X)
+Exp <- function() {
+  f <- function(X, theta) {
+    drop(exp(as.matrix(X) %*% theta))
   }
 
-  H <- function(X, theta, y) {
-    if (missing(y)) {
-      y <- Exp()$f(as.matrix(X), theta)
+  J <- function(X, theta, y = NULL) {
+    X <- as.matrix(X)
+    if (is.null(y)) {
+      y <- exp(X %*% theta)
     }
+    X * as.vector(y)
+  }
+
+  H <- function(X, theta, y = NULL) {
+    X <- as.matrix(X)
+    if (is.null(y)) {
+      y <- exp(X %*% theta)
+    }
+
     k <- length(theta)
+    n <- nrow(X)
 
-    hi <- function(x, y) {
-      h <- matrix(NA, k, k)
-      for(i in 1:k){
-        for(j in i:k){
-          h[i, j] <- h[j, i] <- y*x[i]*x[j]
-        }
-      }
-      h
+    # Preallocate the list of Hessians
+    H_list <- vector("list", n)
+
+    # Efficient row-wise Hessian computation (no Map or split)
+    for (i in seq_len(n)) {
+      xi <- X[i, ]
+      yi <- y[i]
+      H_list[[i]] <- tcrossprod(xi) * yi
     }
 
-    Map(function(x, y) hi(x, y), x = split(as.matrix(X), f = row(as.matrix(X))), y = y)
+    H_list
   }
 
   list(f = f, J = J, H = H)
-
 }
 
 
@@ -311,61 +315,52 @@ Exp <- function(){
 #' hessian_list[[1]]  # Hessian matrix for the first observation
 #'
 #' @export
-cobb_douglas <- function(){
+cobb_douglas <- function() {
 
   f <- function(X, theta) {
-    apply(as.matrix(X), 1, function(x) theta[1]*prod(x^theta[-1]))
+    drop(theta[1] * exp(log(as.matrix(X)) %*% theta[-1]))
   }
 
-
-  J <- function(X, theta, y) {
-    if (missing(y)) {
-      y <- apply(as.matrix(X), 1, function(x) theta[1]*prod(x^theta[-1]))
+  J <- function(X, theta, y = NULL) {
+    logX <- log(as.matrix(X))
+    if (is.null(y)) {
+      y <- drop(theta[1] * exp(logX %*% theta[-1]))
     }
 
-    j <- cbind(y/theta[1])
-
-    for(i in 1:ncol(X)){
-      j <- cbind(j, y*log(as.matrix(X)[, i]))
-    }
-    j
+    cbind(y / theta[1], y * logX)
   }
 
-
-  H <- function(X, theta, y){
-    if (missing(y)) {
-      y <- apply(as.matrix(X), 1, function(x) theta[1]*prod(x^theta[-1]))
-    }
+  H <- function(X, theta, y = NULL) {
+    logX <- log(as.matrix(X))
     k <- length(theta)
 
-    hi <- function(lx, y) {
-      h <- matrix(NA, k, k)
-      for(i in 1:k){
-        for(j in i:k){
-
-          if ((i == 1) & (j == 1)) {
-            h[i, j]  <- 0
-          }
-          else if (i == 1) {
-            h[i, j] <- h[j, i] <- (y/theta[1])*lx[j - 1]
-          }
-          else {
-            h[i, j] <- h[j, i] <-  y*lx[i - 1]*lx[j - 1]
-          }
-        }
-
-      }
-
-      h
+    if (is.null(y)) {
+      y <- drop(theta[1] * exp(logX %*% theta[-1]))
     }
 
-    Map(function(x, y) hi(x, y), x = split(log(as.matrix(X)), f = row(as.matrix(X))), y = y)
+    n <- nrow(X)
+    H_list <- vector("list", n)
 
+    for (i in seq_len(n)) {
+      h <- matrix(0, k, k)
+      lxi <- drop(logX[i, ])
+      yi <- y[i]
+
+      # Derivatives wrt theta_0 (intercept) and rest
+      h[1, -1] <- h[-1, 1] <- (yi / theta[1]) * lxi
+      for (r in 2:k) {
+        for (c in r:k) {
+          h[r, c] <- h[c, r] <- yi * lxi[r - 1] * lxi[c - 1]
+        }
+      }
+
+      H_list[[i]] <- h
+    }
+
+    H_list
   }
 
   list(f = f, J = J, H = H)
-
-
 }
 
 
