@@ -2,7 +2,7 @@
 % Please edit documentation in R/gnlmsa.R
 \name{gnlmsa}
 \alias{gnlmsa}
-\title{Fitting Generalized Non-Linear Models}
+\title{Fit a Generalized Non-Linear Model with Mean and Dispersion Components}
 \usage{
 gnlmsa(
   y,
@@ -33,61 +33,88 @@ gnlmsa(
 )
 }
 \arguments{
-\item{y}{numerical vector of response values.}
+\item{y}{Numeric vector of response values.}
 
-\item{X}{design matrix for the mean model.}
+\item{X}{Design matrix for the mean component.}
 
-\item{Z}{design matrix for the dispersion model.}
+\item{Z}{Design matrix for the dispersion component.}
 
-\item{family}{a \code{\link{family_gnlmsa}} object.}
+\item{family}{A \code{\link{family_gnlmsa}} object specifying distributional assumptions and required derivatives.}
 
-\item{f_mu}{predictor function for the mean component.}
+\item{f_mu}{Function for the mean component nonlinear predictor.}
 
-\item{J_mu}{(optional) Jacobian of \code{f_mu} with respect to the parameters.}
+\item{J_mu}{(Optional) Jacobian of \code{f_mu}.}
 
-\item{H_mu}{(optional) Hessian of \code{f_mu} with respect to the parameters.}
+\item{H_mu}{(Optional) Hessian of \code{f_mu}.}
 
-\item{f_phi}{predictor function for the dispersion component.}
+\item{f_phi}{Function for the dispersion component nonlinear predictor.}
 
-\item{J_phi}{(optional) Jacobian of \code{f_phi} with respect to the parameters.}
+\item{J_phi}{(Optional) Jacobian of \code{f_phi}.}
 
-\item{H_phi}{(optional) Hessian of \code{f_phi} with respect to the parameters.}
+\item{H_phi}{(Optional) Hessian of \code{f_phi}.}
 
-\item{beta_start}{initial values for the parameters of the mean component.}
+\item{beta_start}{Initial values for the parameters of the mean component.}
 
-\item{lower_mu}{lower bounds for the parameters of the mean component.}
+\item{lower_mu}{Numeric vector defining lower bounds for the mean parameters.}
 
-\item{upper_mu}{upper bounds for the parameters of the mean component.}
+\item{upper_mu}{Numeric vector defining upper bounds for the mean parameters.}
 
-\item{gamma_start}{initial values for the parameters of the dispersion component.}
+\item{gamma_start}{Initial values for the parameters of the dispersion component.}
 
-\item{lower_phi}{lower bounds for the parameters of the dispersion component.}
+\item{lower_phi}{Numeric vector defining lower bounds for the dispersion parameters.}
 
-\item{upper_phi}{upper bounds for the parameters of the dispersion component.}
+\item{upper_phi}{Numeric vector defining upper bounds for the dispersion parameters.}
 
-\item{mult}{numerical vector multipliers of errors in Simulated Annealing algorithm.}
+\item{mult}{Proposal scaling factor for the Simulated Annealing algorithm.}
 
-\item{nsim}{number of Simulated Annealing simulations to perform (possibly in parallel).}
+\item{nsim}{Number of independent Simulated Annealing simulations (currently only \code{1} is supported).}
 
-\item{sa_control}{list of control parameters for Simulated Annealing algorithm, created with \code{sa_control()}}
+\item{sa_control}{A list of Simulated Annealing options created via \code{\link[=sa_control]{sa_control()}}.}
 
-\item{maxit}{integer. Maximum number of iterations in Newton-Raphson optimization.}
+\item{maxit}{Maximum number of Newton–Raphson iterations.}
 
-\item{tol}{convergence tolerance on the parameters (default 1e‑5).}
+\item{tol}{Tolerance for convergence in Newton–Raphson.}
 
-\item{expected}{logical indicating whether to use the expected (default, \code{expected = TRUE}) or the observed (\code{expected = FALSE}) in the optimization algorithm.}
+\item{expected}{Logical; use the expected (\code{TRUE}) or the observed (\code{FALSE}) Hessian.}
 
-\item{verbose}{logical indicating whether to print progress information.}
+\item{verbose}{Logical; print progress during Simulated Annealing.}
 
-\item{beta_names}{(optional) character vector containing the names of parameters of mean component. Must be of the same length of \code{beta_start}, \code{lower_mu} and \code{upper_mu}.}
+\item{beta_names}{(Optional) Names of the parameters in the mean component.}
 
-\item{gamma_names}{(optional) character vector containing the names of parameters of dispersion component. Must be of the same length of \code{gamma_start}, \code{lower_phi} and \code{upper_phi}.}
+\item{gamma_names}{(Optional) Names of the parameters in the dispersion component.}
 }
 \value{
-A list.
+A list of class \code{"gnlmsa"} containing:
+\describe{
+\item{coef}{Named vector of estimated parameters (concatenation of \code{beta} and \code{gamma}).}
+\item{beta, gamma}{Estimated coefficients for mean and dispersion components.}
+\item{loglik}{Log-likelihood of the final fitted model.}
+\item{eta, mu}{Predictor and fitted values for the mean component.}
+\item{vi, phi}{Predictor and fitted values for the dispersion component.}
+\item{nsim, mult}{Settings used for Simulated Annealing.}
+\item{nobs, df, df.residuals}{Sample size and degrees of freedom.}
+\item{npar_mu}{Number of parameters for the mean component.}
+\item{nr_failed}{Logical; \code{TRUE} if the Newton–Raphson step failed.}
+\item{nr_better}{Logical; \code{TRUE} if Newton–Raphson log-likelihood was better than Simulated Annealing.}
+\item{mean_model, dispersion_model}{List of functions used to specify model components.}
+\item{map_functions}{List of mapping functions used to transform bounded to unbounded parameters.}
+\item{lower, upper}{Parameter bounds.}
+\item{family}{The \code{family_gnlmsa} object used.}
+\item{X, Z, y}{Original data matrices and response vector.}
+}
 }
 \description{
-Fitting Generalized Non-Linear Models
+The fitting procedure consists of two stages:
+\enumerate{
+\item Simulated Annealing is used to explore the parameter space and identify a good candidate solution.
+\item Newton–Raphson is then used to refine this candidate. If the local optimization fails, or
+the Simulated Annealing solution yields a higher log-likelihood, the SA result is retained.
+}
+}
+\details{
+Fits a Generalized Non-Linear Model (GNLM) by combining global optimization via Simulated Annealing
+and local refinement via Newton–Raphson. The model includes both a mean component and a dispersion
+component, each of which can be specified using user-defined nonlinear predictors.
 }
 \examples{
 \dontrun{

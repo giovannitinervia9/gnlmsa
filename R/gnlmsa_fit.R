@@ -1,52 +1,50 @@
-#' Fit Generalized Non‑Linear Models via Newton–Raphson Algorithm
+#' Fit Generalized Non-Linear Models via Newton–Raphson Optimization
 #'
-#' Simultaneously estimates the mean and dispersion components of a
-#' Generalized Non‑Linear Model (GNLM) by a full Newton–Raphson routine that
-#' relies on the score vector and observed (or, optionally, expected) Hessian
-#' matrix.
-#' Arbitrary non‑linear predictors can be supplied for both components, and
-#' users may optionally provide analytic Jacobians and Hessians to accelerate
-#' convergence.
+#' Estimates the parameters of a Generalized Non-Linear Model (GNLM) using a full Newton–Raphson optimization routine.
+#' The algorithm jointly estimates both the mean and dispersion components by iteratively updating the parameter vector
+#' based on the gradient (score) and the Hessian of the log-likelihood.
+#'
+#' Arbitrary non-linear predictors may be supplied for both the mean and dispersion components, with optional
+#' user-provided Jacobians and Hessians to improve convergence.
 #'
 #' @section Details:
-#' The iterative loop stops when the absolute change of every parameter falls
-#' below `tol` or when `maxit` iterations are reached.
-#' A warning is issued if the log‑likelihood decreases between successive
-#' iterations, but the algorithm continues from the current values.
-#' The required distributional functions (links, variance, score, Hessians and
-#' log‑likelihood) must be provided through a [`family_gnlmsa`] object.
+#' Iterations continue until the absolute change in all parameters is less than \code{tol},
+#' or until \code{maxit} iterations have been performed.
+#' If the log-likelihood decreases between iterations, a warning is issued, but the algorithm continues from the current point.
+#' All distribution-specific functions (link, variance, score, Hessians, log-likelihood) must be supplied via a [`family_gnlmsa`] object.
 #'
-#' @param y numerical vector of response values.
-#' @param X design matrix for the mean component.
-#' @param Z design matrix for the dispersion component.
-#' @param family a [`family_gnlmsa`] object.
-#' @param f_mu predictor function for the mean_component.
-#' @param J_mu (optional) jacobian of `f_mu()`.
-#' @param H_mu (optional) hessian of `f_mu()`.
-#' @param f_phi predictor function for the dispersion component.
-#' @param J_phi (optional) jacobian of `f_phi()`.
-#' @param H_phi (optional) hessian of `f_phi()`.
-#' @param beta_start numerical vector of starting values for the parameters of the mean component.
-#' @param gamma_start numerical vector of starting values for the parameters of the dispersion component.
-#' @param maxit integer. Maximum number of iterations.
-#' @param tol convergence tolerance on the parameters (default 1e‑5).
-#' @param expected logical indicating whether to use the expected (default, `expected = TRUE`) or the observed (`expected = FALSE`) in the optimization algorithm.
+#' @param y Numeric vector of response values.
+#' @param X Design matrix for the mean component.
+#' @param Z Design matrix for the dispersion component.
+#' @param family A [`family_gnlmsa`] object defining the distribution, link functions, and associated derivatives.
+#' @param f_mu Function computing the nonlinear predictor for the mean component.
+#' @param J_mu Optional. Jacobian of \code{f_mu}.
+#' @param H_mu Optional. Hessian of \code{f_mu}.
+#' @param f_phi Function computing the nonlinear predictor for the dispersion component.
+#' @param J_phi Optional. Jacobian of \code{f_phi}.
+#' @param H_phi Optional. Hessian of \code{f_phi}.
+#' @param beta_start Initial values for the parameters of the mean component.
+#' @param gamma_start Initial values for the parameters of the dispersion component.
+#' @param maxit Integer. Maximum number of iterations (default: 100).
+#' @param tol Numeric. Convergence tolerance on parameter updates (default: 1e-5).
+#' @param expected Logical; if \code{TRUE} (default), the expected (Fisher) information is used for the Hessian.
+#'   If \code{FALSE}, the observed Hessian is used.
 #'
-#' @return
-#' A list of class `"gnlmsa_fit"` with the following components:
+#' @return A list of class `"gnlmsa_fit"` with the following components:
 #' \describe{
 #'   \item{beta}{Estimated coefficients for the mean component.}
 #'   \item{gamma}{Estimated coefficients for the dispersion component.}
-#'   \item{loglik}{Final log‑likelihood value.}
-#'   \item{eta}{Vector of linear predictors for the mean,
-#'              \eqn{\hat{\eta} = \eta(X, \hat{\beta})}.}
-#'   \item{mu}{Fitted means, \eqn{\hat{\mu} = g^{-1}(\hat{\eta})}.}
-#'   \item{vi}{Vector of linear predictors for the dispersion,
-#'              \eqn{\hat{v} = v(Z, \hat{\gamma})}.}
+#'   \item{loglik}{Final value of the log-likelihood.}
+#'   \item{eta}{Predictor for the mean component, \eqn{\hat{\eta}}.}
+#'   \item{mu}{Fitted values for the mean, \eqn{\hat{\mu} = g^{-1}(\hat{\eta})}.}
+#'   \item{vi}{Predictor for the dispersion component, \eqn{\hat{v}}.}
 #'   \item{phi}{Fitted dispersion values, \eqn{\hat{\phi} = h^{-1}(\hat{v})}.}
 #'   \item{it}{Number of iterations performed.}
-#'   \item{maxit, tol}{The stopping criteria that were used.}
+#'   \item{maxit}{Maximum number of iterations allowed.}
+#'   \item{tol}{Convergence tolerance used.}
 #' }
+#'
+#'
 #' @export
 #'
 #' @examples

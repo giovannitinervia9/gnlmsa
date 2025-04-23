@@ -2,7 +2,7 @@
 % Please edit documentation in R/gnlmsa_fit.R
 \name{gnlmsa_fit}
 \alias{gnlmsa_fit}
-\title{Fit Generalized Non‑Linear Models via Newton–Raphson Algorithm}
+\title{Fit Generalized Non-Linear Models via Newton–Raphson Optimization}
 \usage{
 gnlmsa_fit(
   y,
@@ -23,69 +23,67 @@ gnlmsa_fit(
 )
 }
 \arguments{
-\item{y}{numerical vector of response values.}
+\item{y}{Numeric vector of response values.}
 
-\item{X}{design matrix for the mean component.}
+\item{X}{Design matrix for the mean component.}
 
-\item{Z}{design matrix for the dispersion component.}
+\item{Z}{Design matrix for the dispersion component.}
 
-\item{family}{a \code{\link{family_gnlmsa}} object.}
+\item{family}{A \code{\link{family_gnlmsa}} object defining the distribution, link functions, and associated derivatives.}
 
-\item{f_mu}{predictor function for the mean_component.}
+\item{f_mu}{Function computing the nonlinear predictor for the mean component.}
 
-\item{J_mu}{(optional) jacobian of \code{f_mu()}.}
+\item{J_mu}{Optional. Jacobian of \code{f_mu}.}
 
-\item{H_mu}{(optional) hessian of \code{f_mu()}.}
+\item{H_mu}{Optional. Hessian of \code{f_mu}.}
 
-\item{f_phi}{predictor function for the dispersion component.}
+\item{f_phi}{Function computing the nonlinear predictor for the dispersion component.}
 
-\item{J_phi}{(optional) jacobian of \code{f_phi()}.}
+\item{J_phi}{Optional. Jacobian of \code{f_phi}.}
 
-\item{H_phi}{(optional) hessian of \code{f_phi()}.}
+\item{H_phi}{Optional. Hessian of \code{f_phi}.}
 
-\item{beta_start}{numerical vector of starting values for the parameters of the mean component.}
+\item{beta_start}{Initial values for the parameters of the mean component.}
 
-\item{gamma_start}{numerical vector of starting values for the parameters of the dispersion component.}
+\item{gamma_start}{Initial values for the parameters of the dispersion component.}
 
-\item{maxit}{integer. Maximum number of iterations.}
+\item{maxit}{Integer. Maximum number of iterations (default: 100).}
 
-\item{tol}{convergence tolerance on the parameters (default 1e‑5).}
+\item{tol}{Numeric. Convergence tolerance on parameter updates (default: 1e-5).}
 
-\item{expected}{logical indicating whether to use the expected (default, \code{expected = TRUE}) or the observed (\code{expected = FALSE}) in the optimization algorithm.}
+\item{expected}{Logical; if \code{TRUE} (default), the expected (Fisher) information is used for the Hessian.
+If \code{FALSE}, the observed Hessian is used.}
 }
 \value{
 A list of class \code{"gnlmsa_fit"} with the following components:
 \describe{
 \item{beta}{Estimated coefficients for the mean component.}
 \item{gamma}{Estimated coefficients for the dispersion component.}
-\item{loglik}{Final log‑likelihood value.}
-\item{eta}{Vector of linear predictors for the mean,
-\eqn{\hat{\eta} = \eta(X, \hat{\beta})}.}
-\item{mu}{Fitted means, \eqn{\hat{\mu} = g^{-1}(\hat{\eta})}.}
-\item{vi}{Vector of linear predictors for the dispersion,
-\eqn{\hat{v} = v(Z, \hat{\gamma})}.}
+\item{loglik}{Final value of the log-likelihood.}
+\item{eta}{Predictor for the mean component, \eqn{\hat{\eta}}.}
+\item{mu}{Fitted values for the mean, \eqn{\hat{\mu} = g^{-1}(\hat{\eta})}.}
+\item{vi}{Predictor for the dispersion component, \eqn{\hat{v}}.}
 \item{phi}{Fitted dispersion values, \eqn{\hat{\phi} = h^{-1}(\hat{v})}.}
 \item{it}{Number of iterations performed.}
-\item{maxit, tol}{The stopping criteria that were used.}
+\item{maxit}{Maximum number of iterations allowed.}
+\item{tol}{Convergence tolerance used.}
 }
 }
 \description{
-Simultaneously estimates the mean and dispersion components of a
-Generalized Non‑Linear Model (GNLM) by a full Newton–Raphson routine that
-relies on the score vector and observed (or, optionally, expected) Hessian
-matrix.
-Arbitrary non‑linear predictors can be supplied for both components, and
-users may optionally provide analytic Jacobians and Hessians to accelerate
-convergence.
+Estimates the parameters of a Generalized Non-Linear Model (GNLM) using a full Newton–Raphson optimization routine.
+The algorithm jointly estimates both the mean and dispersion components by iteratively updating the parameter vector
+based on the gradient (score) and the Hessian of the log-likelihood.
+}
+\details{
+Arbitrary non-linear predictors may be supplied for both the mean and dispersion components, with optional
+user-provided Jacobians and Hessians to improve convergence.
 }
 \section{Details}{
 
-The iterative loop stops when the absolute change of every parameter falls
-below \code{tol} or when \code{maxit} iterations are reached.
-A warning is issued if the log‑likelihood decreases between successive
-iterations, but the algorithm continues from the current values.
-The required distributional functions (links, variance, score, Hessians and
-log‑likelihood) must be provided through a \code{\link{family_gnlmsa}} object.
+Iterations continue until the absolute change in all parameters is less than \code{tol},
+or until \code{maxit} iterations have been performed.
+If the log-likelihood decreases between iterations, a warning is issued, but the algorithm continues from the current point.
+All distribution-specific functions (link, variance, score, Hessians, log-likelihood) must be supplied via a \code{\link{family_gnlmsa}} object.
 }
 
 \examples{
