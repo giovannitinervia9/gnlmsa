@@ -75,9 +75,7 @@
 #' @export
 grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
-  w <- mu.eta(eta)/variance(mu, phi)
-  j <- J_mu(X, beta)
-  drop(t(w*j)%*%(y - mu))
+  colSums(J_mu(X, beta)*(mu.eta(eta)/variance(mu, phi))*(y - mu)) # J*w*(y - mu)
 }
 
 
@@ -158,26 +156,40 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #'         f_mu, J_mu, H_mu,
 #'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
 #'         expected = FALSE)
-hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2, variance, expected = TRUE){
-  if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
-  if(missing(H_mu)) H_mu <- make_hessian(f_mu)
+hess_mu<- function(y, X, beta, mu, eta, phi,
+                   f_mu, J_mu, H_mu,
+                   mu.eta, mu2.eta2, variance,
+                   expected = TRUE) {
+
+  if (missing(J_mu)) J_mu <- make_jacobian(f_mu)
+  if (missing(H_mu)) H_mu <- make_hessian(f_mu)
 
   mu_eta <- mu.eta(eta)
+  mu2_eta2 <- mu2.eta2(eta)
 
   j <- J_mu(X, beta)
   v <- variance(mu, phi)
-  w1 <- (mu_eta^2)/v
-  h1 <- -crossprod(j, w1*j)
+
+  # Expected part
+  w1 <- (mu_eta^2) / v
+  h1 <- -crossprod(j, w1 * j)
 
   if (expected) {
     return(h1)
-  } else {
-    w2 <- ((y - mu)/v)
-    h21 <- crossprod(j, w2*mu2.eta2(eta)*j)
-
-    h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*mu_eta, h = H_mu(X, beta)))
-    h1 + h21 + h22
   }
+
+  # Observed part
+  w2 <- (y - mu) / v
+
+  h21 <- crossprod(j, (w2 * mu2_eta2) * j)
+
+  H_list <- H_mu(X, beta)
+  h22 <- matrix(0, ncol(j), ncol(j))
+  for (i in seq_along(w2)) {
+    h22 <- h22 + w2[i] * mu_eta[i] * H_list[[i]]
+  }
+
+  h1 + h21 + h22
 }
 
 

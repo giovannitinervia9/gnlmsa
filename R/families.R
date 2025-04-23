@@ -241,25 +241,32 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
   }
 
 
-  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi, phi.vi, phi2.vi2, expected = TRUE){
-    if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
-    if(missing(H_phi)) H_phi <- make_hessian(f_phi)
-
-    phi_vi <- phi.vi(vi)
+  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi,
+                       phi.vi, phi2.vi2, expected = TRUE) {
+    if (missing(J_phi)) J_phi <- make_jacobian(f_phi)
+    if (missing(H_phi)) H_phi <- make_hessian(f_phi)
 
     j <- J_phi(Z, gamma)
-    w1 <- (1/phi - trigamma(phi))*phi_vi^2
-    h1 <- crossprod(j, w1*j)
+    phi_vi <- phi.vi(vi)
+
+    w1 <- (1 / phi - trigamma(phi)) * (phi_vi^2)
+    h1 <- crossprod(j, w1 * j)
 
     if (expected) {
       return(h1)
-    } else {
-      w2 <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y/mu)
-
-      h21 <- crossprod(j, j*w2*phi2.vi2(vi))
-      h22 <- Reduce(`+`, Map(function(w, h) w*h, w = w2*phi_vi, h = H_phi(Z, gamma)))
-      h1 + h21 + h22
     }
+
+    # observed part
+    w2 <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y / mu)
+    h21 <- crossprod(j, j * w2 * phi2.vi2(vi))
+
+    H_list <- H_phi(Z, gamma)
+    h22 <- matrix(0, nrow = ncol(j), ncol = ncol(j))
+    for (i in seq_along(w2)) {
+      h22 <- h22 + w2[i] * phi_vi[i] * H_list[[i]]
+    }
+
+    h1 + h21 + h22
   }
 
   hess_mu_phi <- function(y, X, Z, beta, gamma,
