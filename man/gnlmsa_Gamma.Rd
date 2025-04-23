@@ -2,65 +2,78 @@
 % Please edit documentation in R/families.R
 \name{gnlmsa_Gamma}
 \alias{gnlmsa_Gamma}
-\title{Gamma family for Generalized Non-Linear Models}
+\title{Gamma Family for Generalized Non-Linear Models}
 \usage{
 gnlmsa_Gamma(link_mu = "inverse", link_phi = "log")
 }
 \arguments{
-\item{link_mu}{Character string specifying the link function for the mean component.
-Must be one of "inverse" (default), "log", or "identity".}
+\item{link_mu}{A character string specifying the link function for the mean component \eqn{\mu}.
+Must be one of \code{"inverse"} (default), \code{"log"}, \code{"identity"} or \code{"sqrt"}.}
 
-\item{link_phi}{Character string specifying the link function for the dispersion component.
-Must be one of "log" (default) or "sqrt".}
+\item{link_phi}{A character string specifying the link function for the dispersion component \eqn{\phi}.
+Must be one of \code{"log"} (default), \code{"sqrt"} or \code{"identity"}.}
 }
 \value{
-A \code{family_gnlmsa} object (which also inherits from the \code{family} class) containing:
+An object of class \code{family_gnlmsa} (inheriting from \code{family}) with the following components:
 \describe{
-\item{family}{Name of the family distribution ("gnlmsa_Gamma")}
-\item{link_mu}{Name of the link function for \eqn{\mu}}
-\item{linkfun_mu}{Function that transforms \eqn{\mu} to \eqn{\eta}}
-\item{linkinv_mu}{Inverse link function that transforms \eqn{\eta} to \eqn{\mu}}
-\item{mu.eta}{First derivative \eqn{\partial \mu / \partial \eta}}
-\item{mu2.eta2}{Second derivative \eqn{\partial^2 \mu / \partial^2 \eta^2}}
-\item{validmu}{Function to check if mean values are valid}
+\item{family}{Name of the family: \code{"gnlmsa_Gamma"}}
 
-\item{link_phi}{Name of the link function for \eqn{\phi}}
-\item{linkfun_phi}{Function that transforms \eqn{\phi} to \eqn{v}}
-\item{linkinv_phi}{Inverse link function that transforms \eqn{v} to \eqn{\phi}}
-\item{phi.vi}{First derivative \eqn{\partial \phi / \partial v}}
-\item{phi2.vi2}{Second derivative \eqn{\partial^2 \phi / \partial^2 v^2}}
-\item{validphi}{Function to check if dispersion values are valid}
+\item{link_mu}{Name of the link function used for the mean.}
+\item{linkfun_mu}{Function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+\item{linkinv_mu}{Inverse of the link function, mapping \eqn{\eta} to \eqn{\mu}.}
+\item{mu.eta}{First derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+\item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+\item{validmu}{Validator function for the mean: checks positivity and finiteness.}
 
-\item{variance}{Function defining the mean-variance relationship: \eqn{\mu^2 / \phi}}
-\item{loglik}{Function to calculate the log-likelihood}
-\item{grad_phi}{Function for gradient of log-likelihood with respect to dispersion parameters}
-\item{hess_phi}{Function for Hessian matrix of log-likelihood with respect to dispersion parameters}
-\item{hess_mu_phi}{Function for cross-derivative Hessian between mean and dispersion parameters}
+\item{link_phi}{Name of the link function used for the dispersion.}
+\item{linkfun_phi}{Function mapping \eqn{\phi} to the predictor \eqn{v}.}
+\item{linkinv_phi}{Inverse of the link function, mapping \eqn{v} to \eqn{\phi}.}
+\item{phi.vi}{First derivative of \eqn{\phi} with respect to \eqn{v}.}
+\item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+\item{validphi}{Validator function for the dispersion: checks positivity and finiteness.}
+
+\item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \mu_i^2 / \phi_i}.}
+\item{loglik}{Log-likelihood contribution function for each observation.}
+\item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+\item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+\item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
 }
 }
 \description{
-This function creates a family object for Gamma distributions in Generalized Non-Linear Models (GNLM).
+Constructs a \code{family_gnlmsa} object for use with Gamma-distributed response variables in
+Generalized Non-Linear Models (GNLMs). This family supports separate link functions for both
+the conditional mean \eqn{\mu} and the dispersion parameter \eqn{\phi}.
 }
 \details{
-The Gamma distribution is commonly used for modeling continuous, positive data with right skew.
-In this implementation, the pdf of the Gamma distribution is
-\deqn{f(y_i, \phi_i, \mu_i) = \dfrac{ \left(\dfrac{\phi_i}{\mu_i}\right)^{\phi_i}  y_i^{\phi_i - 1} \exp \left(- \phi_i \dfrac{y_i}{\mu_i} \right)   }    {\Gamma(\phi_i)} }
+The Gamma distribution is commonly used to model strictly positive, continuous, and skewed data.
+This implementation assumes the following parameterization of the Gamma density:
+\deqn{
+f(y_i; \mu_i, \phi_i) =
+\dfrac{ \left( \frac{\phi_i}{\mu_i} \right)^{\phi_i} y_i^{\phi_i - 1} \exp\left(- \phi_i \frac{y_i}{\mu_i} \right) }
+{\Gamma(\phi_i)}
+}
 
-The log-likelihood function is
-\deqn{\ell(\mu, \phi) = \sum_{i = 1}^n \left \{ \phi_i \log \phi_i - \log \Gamma(\phi_i) + \phi_i\left( \log y_i - \log \mu_i - \dfrac{y_i}{\mu_i} \right) - \log y_i \right\}}
+The log-likelihood function (summed over all observations) is:
+\deqn{
+\ell(\mu, \phi) = \sum_{i=1}^n
+\left\{
+\phi_i \log \phi_i - \log \Gamma(\phi_i) + \phi_i \left( \log y_i - \log \mu_i - \frac{y_i}{\mu_i} \right) - \log y_i
+\right\}
+}
 
-with
-\deqn{\mu_i = g^{-1}(\eta (x_i, \beta))}
-\deqn{\phi_i = h^{-1}(v(z_i, \gamma))}
+The model allows for the mean and dispersion to depend on separate covariates via nonlinear predictors:
+\deqn{\mu_i = g^{-1}( \eta(x_i, \beta) ), \quad \phi_i = h^{-1}( v(z_i, \gamma) )}
+
+where \eqn{g^{-1}} and \eqn{h^{-1}} are the inverse link functions for the mean and dispersion, respectively.
 }
 \examples{
-# Create a Gamma family with inverse link for mean and log link for dispersion
+# Gamma family with default links
 gamma_fam <- gnlmsa_Gamma()
 
-# Create a Gamma family with log link for mean and sqrt link for dispersion
+# Gamma family with custom links
 gamma_fam2 <- gnlmsa_Gamma(link_mu = "log", link_phi = "sqrt")
 
 }
 \seealso{
-Other family functions in the gnlmsa package
+\code{\link[=family_gnlmsa]{family_gnlmsa()}}, \code{\link[=gnlmsa]{gnlmsa()}}.
 }

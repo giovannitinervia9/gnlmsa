@@ -2,42 +2,53 @@
 % Please edit documentation in R/families.R
 \name{family_gnlmsa}
 \alias{family_gnlmsa}
-\title{Family Objects for Generalized Non-Linear Models}
+\title{Family Objects for Generalized Non-Linear Models with Separate Mean and Dispersion Components}
 \usage{
 family_gnlmsa(object, ...)
 }
 \arguments{
-\item{object}{the function \code{family_gnlmsa} accesses the family objects which are stored within objects created by \code{gnlmsa()}}
+\item{object}{A \code{family_gnlmsa} object.}
 
-\item{...}{further arguments passed to methods.}
+\item{...}{Additional arguments passed to methods.}
 }
 \value{
-An object of class \code{family_gnlmsa}, which is a list with elements:
+A list of class \code{family_gnlmsa} with the following components:
 \describe{
-\item{family}{Name of the family distribution}
-\item{link_mu}{Name of the link function for \eqn{\mu}}
-\item{linkfun_mu}{Function that transforms \eqn{\mu} to \eqn{\eta}}
-\item{linkinv_mu}{Inverse link function that transforms \eqn{\eta} to \eqn{\mu}}
-\item{mu.eta}{First derivative \eqn{\partial \mu / \partial \eta}}
-\item{mu2.eta2}{Second derivative \eqn{\partial^2 \mu / \partial^2 \eta^2}}
-\item{validmu}{Function to check if mean values are valid}
+\item{family}{Name of the assumed response distribution.}
 
-\item{link_phi}{Name of the link function for \eqn{\phi}}
-\item{linkfun_phi}{Function that transforms \eqn{\phi} to \eqn{v}}
-\item{linkinv_phi}{Inverse link function that transforms \eqn{v} to \eqn{\phi}}
-\item{phi.vi}{First derivative \eqn{\partial \phi / \partial v}}
-\item{phi2.vi2}{Second derivative \eqn{\partial^2 \phi / \partial^2 v^2}}
-\item{validphi}{Function to check if dispersion values are valid}
+\item{link_mu}{Name of the link function used for the mean component \eqn{\mu}.}
+\item{linkfun_mu}{The link function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+\item{linkinv_mu}{The inverse link function mapping \eqn{\eta} to \eqn{\mu}.}
+\item{mu.eta}{Derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+\item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+\item{validmu}{Function to check that \eqn{\mu} values are within the valid parameter space.}
 
-\item{variance}{Function defining the mean-variance relationship as a function of both \eqn{\mu} and \eqn{\phi}}
-\item{loglik}{Function to calculate the log-likelihood}
-\item{grad_phi}{Function for gradient of log-likelihood with respect to dispersion parameters}
-\item{hess_phi}{Function for Hessian matrix of log-likelihood with respect to dispersion parameters}
-\item{hess_mu_phi}{Function for cross-derivative Hessian between mean and dispersion parameters}
+\item{link_phi}{Name of the link function used for the dispersion component \eqn{\phi}.}
+\item{linkfun_phi}{The link function mapping \eqn{\phi} to the predictor \eqn{v}.}
+\item{linkinv_phi}{The inverse link function mapping \eqn{v} to \eqn{\phi}.}
+\item{phi.vi}{Derivative of \eqn{\phi} with respect to \eqn{v}.}
+\item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+\item{validphi}{Function to check that \eqn{\phi} values are within the valid parameter space.}
+
+\item{variance}{Function defining the conditional variance as a function of \eqn{\mu} and \eqn{\phi}.}
+\item{loglik}{Function that computes the log-likelihood contribution of each observation.}
+\item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+\item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+\item{hess_mu_phi}{Cross-partial derivative of the log-likelihood with respect to mean and dispersion parameters.}
 }
 }
 \description{
-\code{family_gnlmsa} objects contain all information to fit Generalized Non-Linear Models assuming a particular distribution of the response variable.
+Objects of class \code{family_gnlmsa} provide the necessary components to specify the distributional assumptions
+and link functions for Generalized Non-Linear Models fitted via the \code{\link[=gnlmsa]{gnlmsa()}} function.
+}
+\details{
+Unlike standard \code{family} objects used in generalized linear models (GLMs), \code{family_gnlmsa} accommodates
+models where both the conditional mean \eqn{\mu} and dispersion \eqn{\phi} depend on covariates via
+potentially nonlinear and distinct link functions.
+
+Additionally, the variance function is allowed to depend on both \eqn{\mu} and \eqn{\phi}, and
+the log-likelihood gradient and Hessian with respect to dispersion parameters must be specified separately
+for each distribution, as they are not generally reusable across families.
 }
 \examples{
 gnlmsa_Gamma(link_mu = "inverse", link_phi = "log")

@@ -6,37 +6,47 @@
 
 
 
-#' Family Objects for Generalized Non-Linear Models
+#' Family Objects for Generalized Non-Linear Models with Separate Mean and Dispersion Components
 #'
-#' `family_gnlmsa` objects contain all information to fit Generalized Non-Linear Models assuming a particular distribution of the response variable.
+#' Objects of class `family_gnlmsa` provide the necessary components to specify the distributional assumptions
+#' and link functions for Generalized Non-Linear Models fitted via the [gnlmsa()] function.
 #'
+#' Unlike standard `family` objects used in generalized linear models (GLMs), `family_gnlmsa` accommodates
+#' models where both the conditional mean \eqn{\mu} and dispersion \eqn{\phi} depend on covariates via
+#' potentially nonlinear and distinct link functions.
 #'
-#' @param object the function `family_gnlmsa` accesses the family objects which are stored within objects created by `gnlmsa()`
-#' @param ... further arguments passed to methods.
+#' Additionally, the variance function is allowed to depend on both \eqn{\mu} and \eqn{\phi}, and
+#' the log-likelihood gradient and Hessian with respect to dispersion parameters must be specified separately
+#' for each distribution, as they are not generally reusable across families.
 #'
-#' @returns An object of class `family_gnlmsa`, which is a list with elements:
+#' @param object A `family_gnlmsa` object.
+#' @param ... Additional arguments passed to methods.
+#'
+#' @returns A list of class `family_gnlmsa` with the following components:
 #' \describe{
-#'   \item{family}{Name of the family distribution}
-#'   \item{link_mu}{Name of the link function for \eqn{\mu}}
-#'   \item{linkfun_mu}{Function that transforms \eqn{\mu} to \eqn{\eta}}
-#'   \item{linkinv_mu}{Inverse link function that transforms \eqn{\eta} to \eqn{\mu}}
-#'   \item{mu.eta}{First derivative \eqn{\partial \mu / \partial \eta}}
-#'   \item{mu2.eta2}{Second derivative \eqn{\partial^2 \mu / \partial^2 \eta^2}}
-#'   \item{validmu}{Function to check if mean values are valid}
+#'   \item{family}{Name of the assumed response distribution.}
 #'
-#'   \item{link_phi}{Name of the link function for \eqn{\phi}}
-#'   \item{linkfun_phi}{Function that transforms \eqn{\phi} to \eqn{v}}
-#'   \item{linkinv_phi}{Inverse link function that transforms \eqn{v} to \eqn{\phi}}
-#'   \item{phi.vi}{First derivative \eqn{\partial \phi / \partial v}}
-#'   \item{phi2.vi2}{Second derivative \eqn{\partial^2 \phi / \partial^2 v^2}}
-#'   \item{validphi}{Function to check if dispersion values are valid}
+#'   \item{link_mu}{Name of the link function used for the mean component \eqn{\mu}.}
+#'   \item{linkfun_mu}{The link function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+#'   \item{linkinv_mu}{The inverse link function mapping \eqn{\eta} to \eqn{\mu}.}
+#'   \item{mu.eta}{Derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{validmu}{Function to check that \eqn{\mu} values are within the valid parameter space.}
 #'
-#'   \item{variance}{Function defining the mean-variance relationship as a function of both \eqn{\mu} and \eqn{\phi}}
-#'   \item{loglik}{Function to calculate the log-likelihood}
-#'   \item{grad_phi}{Function for gradient of log-likelihood with respect to dispersion parameters}
-#'   \item{hess_phi}{Function for Hessian matrix of log-likelihood with respect to dispersion parameters}
-#'   \item{hess_mu_phi}{Function for cross-derivative Hessian between mean and dispersion parameters}
+#'   \item{link_phi}{Name of the link function used for the dispersion component \eqn{\phi}.}
+#'   \item{linkfun_phi}{The link function mapping \eqn{\phi} to the predictor \eqn{v}.}
+#'   \item{linkinv_phi}{The inverse link function mapping \eqn{v} to \eqn{\phi}.}
+#'   \item{phi.vi}{Derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{validphi}{Function to check that \eqn{\phi} values are within the valid parameter space.}
+#'
+#'   \item{variance}{Function defining the conditional variance as a function of \eqn{\mu} and \eqn{\phi}.}
+#'   \item{loglik}{Function that computes the log-likelihood contribution of each observation.}
+#'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_mu_phi}{Cross-partial derivative of the log-likelihood with respect to mean and dispersion parameters.}
 #' }
+#'
 #' @export
 #'
 #' @examples
@@ -52,12 +62,16 @@ family_gnlmsa <- function (object, ...) {
 
 
 
-#' Print method for `family_gnlmsa` objects
+#' Print Method for `family_gnlmsa` Objects
 #'
-#' @param x A `family_gnlmsa` object
-#' @param ... further arguments passed to methods.
+#' Displays a summary of the distribution family and associated link functions used for modeling the mean and dispersion components in a `gnlmsa` model.
 #'
-#' @return Details about the family definition and the family object.
+#' This method is automatically invoked when printing a `family_gnlmsa` object.
+#'
+#' @param x An object of class `family_gnlmsa`.
+#' @param ... Additional arguments passed to or from other methods (currently unused).
+#'
+#' @return The input object is returned invisibly. The function is called for its side effect of printing information to the console.
 #' @export
 #'
 #' @examples
@@ -76,59 +90,72 @@ print.family_gnlmsa <- function(x, ...){
 
 
 
-#' Gamma family for Generalized Non-Linear Models
+#' Gamma Family for Generalized Non-Linear Models
 #'
-#' This function creates a family object for Gamma distributions in Generalized Non-Linear Models (GNLM).
+#' Constructs a `family_gnlmsa` object for use with Gamma-distributed response variables in
+#' Generalized Non-Linear Models (GNLMs). This family supports separate link functions for both
+#' the conditional mean \eqn{\mu} and the dispersion parameter \eqn{\phi}.
 #'
-#' @param link_mu Character string specifying the link function for the mean component.
-#'   Must be one of "inverse" (default), "log", or "identity".
-#' @param link_phi Character string specifying the link function for the dispersion component.
-#'   Must be one of "log" (default) or "sqrt".
+#' @param link_mu A character string specifying the link function for the mean component \eqn{\mu}.
+#'   Must be one of `"inverse"` (default), `"log"`, `"identity"` or `"sqrt"`.
+#' @param link_phi A character string specifying the link function for the dispersion component \eqn{\phi}.
+#'   Must be one of `"log"` (default), `"sqrt"` or `"identity"`.
 #'
-#' @return A \code{family_gnlmsa} object (which also inherits from the \code{family} class) containing:
+#' @return An object of class `family_gnlmsa` (inheriting from `family`) with the following components:
 #' \describe{
-#'   \item{family}{Name of the family distribution ("gnlmsa_Gamma")}
-#'   \item{link_mu}{Name of the link function for \eqn{\mu}}
-#'   \item{linkfun_mu}{Function that transforms \eqn{\mu} to \eqn{\eta}}
-#'   \item{linkinv_mu}{Inverse link function that transforms \eqn{\eta} to \eqn{\mu}}
-#'   \item{mu.eta}{First derivative \eqn{\partial \mu / \partial \eta}}
-#'   \item{mu2.eta2}{Second derivative \eqn{\partial^2 \mu / \partial^2 \eta^2}}
-#'   \item{validmu}{Function to check if mean values are valid}
+#'   \item{family}{Name of the family: `"gnlmsa_Gamma"`}
 #'
-#'   \item{link_phi}{Name of the link function for \eqn{\phi}}
-#'   \item{linkfun_phi}{Function that transforms \eqn{\phi} to \eqn{v}}
-#'   \item{linkinv_phi}{Inverse link function that transforms \eqn{v} to \eqn{\phi}}
-#'   \item{phi.vi}{First derivative \eqn{\partial \phi / \partial v}}
-#'   \item{phi2.vi2}{Second derivative \eqn{\partial^2 \phi / \partial^2 v^2}}
-#'   \item{validphi}{Function to check if dispersion values are valid}
+#'   \item{link_mu}{Name of the link function used for the mean.}
+#'   \item{linkfun_mu}{Function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+#'   \item{linkinv_mu}{Inverse of the link function, mapping \eqn{\eta} to \eqn{\mu}.}
+#'   \item{mu.eta}{First derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{validmu}{Validator function for the mean: checks positivity and finiteness.}
 #'
-#'   \item{variance}{Function defining the mean-variance relationship: \eqn{\mu^2 / \phi}}
-#'   \item{loglik}{Function to calculate the log-likelihood}
-#'   \item{grad_phi}{Function for gradient of log-likelihood with respect to dispersion parameters}
-#'   \item{hess_phi}{Function for Hessian matrix of log-likelihood with respect to dispersion parameters}
-#'   \item{hess_mu_phi}{Function for cross-derivative Hessian between mean and dispersion parameters}
+#'   \item{link_phi}{Name of the link function used for the dispersion.}
+#'   \item{linkfun_phi}{Function mapping \eqn{\phi} to the predictor \eqn{v}.}
+#'   \item{linkinv_phi}{Inverse of the link function, mapping \eqn{v} to \eqn{\phi}.}
+#'   \item{phi.vi}{First derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{validphi}{Validator function for the dispersion: checks positivity and finiteness.}
+#'
+#'   \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \mu_i^2 / \phi_i}.}
+#'   \item{loglik}{Log-likelihood contribution function for each observation.}
+#'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
 #' }
 #'
 #' @details
-#' The Gamma distribution is commonly used for modeling continuous, positive data with right skew.
-#' In this implementation, the pdf of the Gamma distribution is
-#' \deqn{f(y_i, \phi_i, \mu_i) = \dfrac{ \left(\dfrac{\phi_i}{\mu_i}\right)^{\phi_i}  y_i^{\phi_i - 1} \exp \left(- \phi_i \dfrac{y_i}{\mu_i} \right)   }    {\Gamma(\phi_i)} }
+#' The Gamma distribution is commonly used to model strictly positive, continuous, and skewed data.
+#' This implementation assumes the following parameterization of the Gamma density:
+#' \deqn{
+#' f(y_i; \mu_i, \phi_i) =
+#' \dfrac{ \left( \frac{\phi_i}{\mu_i} \right)^{\phi_i} y_i^{\phi_i - 1} \exp\left(- \phi_i \frac{y_i}{\mu_i} \right) }
+#' {\Gamma(\phi_i)}
+#' }
 #'
-#' The log-likelihood function is
-#' \deqn{\ell(\mu, \phi) = \sum_{i = 1}^n \left \{ \phi_i \log \phi_i - \log \Gamma(\phi_i) + \phi_i\left( \log y_i - \log \mu_i - \dfrac{y_i}{\mu_i} \right) - \log y_i \right\}}
+#' The log-likelihood function (summed over all observations) is:
+#' \deqn{
+#' \ell(\mu, \phi) = \sum_{i=1}^n
+#' \left\{
+#' \phi_i \log \phi_i - \log \Gamma(\phi_i) + \phi_i \left( \log y_i - \log \mu_i - \frac{y_i}{\mu_i} \right) - \log y_i
+#' \right\}
+#' }
 #'
-#' with
-#' \deqn{\mu_i = g^{-1}(\eta (x_i, \beta))}
-#' \deqn{\phi_i = h^{-1}(v(z_i, \gamma))}
+#' The model allows for the mean and dispersion to depend on separate covariates via nonlinear predictors:
+#' \deqn{\mu_i = g^{-1}( \eta(x_i, \beta) ), \quad \phi_i = h^{-1}( v(z_i, \gamma) )}
+#'
+#' where \eqn{g^{-1}} and \eqn{h^{-1}} are the inverse link functions for the mean and dispersion, respectively.
 #'
 #' @examples
-#' # Create a Gamma family with inverse link for mean and log link for dispersion
+#' # Gamma family with default links
 #' gamma_fam <- gnlmsa_Gamma()
 #'
-#' # Create a Gamma family with log link for mean and sqrt link for dispersion
+#' # Gamma family with custom links
 #' gamma_fam2 <- gnlmsa_Gamma(link_mu = "log", link_phi = "sqrt")
 #'
-#' @seealso Other family functions in the gnlmsa package
+#' @seealso [family_gnlmsa()], [gnlmsa()].
 #'
 #' @export
 gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
@@ -136,8 +163,8 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
   linktemp_mu <- substitute(link_mu)
   linktemp_phi <- substitute(link_phi)
 
-  okLinks_mu <- c("inverse", "log", "identity")
-  okLinks_phi <- c("log", "sqrt")
+  okLinks_mu <- c("inverse", "log", "sqrt", "identity")
+  okLinks_phi <- c("log", "sqrt", "identity")
 
   family <- "gnlmsa_Gamma"
 

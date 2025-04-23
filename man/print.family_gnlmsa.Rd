@@ -2,20 +2,23 @@
 % Please edit documentation in R/families.R
 \name{print.family_gnlmsa}
 \alias{print.family_gnlmsa}
-\title{Print method for \code{family_gnlmsa} objects}
+\title{Print Method for \code{family_gnlmsa} Objects}
 \usage{
 \method{print}{family_gnlmsa}(x, ...)
 }
 \arguments{
-\item{x}{A \code{family_gnlmsa} object}
+\item{x}{An object of class \code{family_gnlmsa}.}
 
-\item{...}{further arguments passed to methods.}
+\item{...}{Additional arguments passed to or from other methods (currently unused).}
 }
 \value{
-Details about the family definition and the family object.
+The input object is returned invisibly. The function is called for its side effect of printing information to the console.
 }
 \description{
-Print method for \code{family_gnlmsa} objects
+Displays a summary of the distribution family and associated link functions used for modeling the mean and dispersion components in a \code{gnlmsa} model.
+}
+\details{
+This method is automatically invoked when printing a \code{family_gnlmsa} object.
 }
 \examples{
 gamma_fam <- gnlmsa_Gamma()
