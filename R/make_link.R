@@ -9,7 +9,6 @@
 #'
 #' This function creates a link function object similar to `stats::make.link()` but extends it by
 #' including the second derivative of the mean with respect to eta (`mu2.eta2`).
-#' This is useful for generalized non-linear models where higher-order derivatives are required.
 #'
 #' @param link Character string specifying the link function. Options include:
 #'   \itemize{

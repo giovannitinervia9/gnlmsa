@@ -32,6 +32,7 @@
 #'
 #'
 #' @examples
+#' \dontrun{
 #' # create family object
 #' fam_gamma <- gnlmsa_Gamma(link_mu = "identity", link_phi = "log")
 #'
@@ -70,6 +71,8 @@
 #' grad_mu(y, X, beta, mu, eta, phi,
 #'         f_mu, J_mu,
 #'         fam_gamma$mu.eta, fam_gamma$variance)
+#' }
+#' @export
 grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
   w <- mu.eta(eta)/variance(mu, phi)
@@ -110,7 +113,7 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #' This function evaluates the hessian matrix (second derivative of the log-likelihood) with respect to
 #' the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that the appropriate
 #' variance and derivative functions are specified.
-#'
+#' @export
 #' @examples
 #' # create family object
 #' fam_gamma <- gnlmsa_Gamma(link_mu = "identity", link_phi = "log")
@@ -211,7 +214,7 @@ hess_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu, mu.eta, mu2.eta2
 #' (mean and dispersion) are estimated jointly.
 #'
 #' All inputs must be compatible in dimension and properly computed; no internal checks are performed.
-#'
+#' @export
 #' @examples
 #' # create family object
 #' fam_gamma <- gnlmsa_Gamma(link_mu = "identity", link_phi = "log")
@@ -304,7 +307,7 @@ hess <- function(h_mu, h_phi, h_mu_phi){
 #' and \code{gamma} (for the dispersion), computes the predicted mean and dispersion using the
 #' inverse link functions, and then evaluates the log-likelihood. The log-likelihood is returned with a
 #' negative sign for compatibility with minimization algorithms.
-#'
+#' @export
 #' @examples
 #' # create family object
 #' fam_gamma <- gnlmsa_Gamma(link_mu = "identity", link_phi = "log")

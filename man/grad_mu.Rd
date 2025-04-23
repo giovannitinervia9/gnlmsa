@@ -41,6 +41,7 @@ the mean parameters \eqn{\beta}. It is valid for any GNLM family provided that t
 variance and derivative functions are specified.
 }
 \examples{
+\dontrun{
 # create family object
 fam_gamma <- gnlmsa_Gamma(link_mu = "identity", link_phi = "log")
 
@@ -79,4 +80,5 @@ y <- rgamma(n, phi, phi/mu)
 grad_mu(y, X, beta, mu, eta, phi,
         f_mu, J_mu,
         fam_gamma$mu.eta, fam_gamma$variance)
+}
 }

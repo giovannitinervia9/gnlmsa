@@ -5,16 +5,30 @@
 
 
 
-#' Options for Simulated Annealing algorithm
+#' Control Parameters for the Simulated Annealing Algorithm
 #'
-#' @param iterations integer indicating the number of iterations to perform.
-#' @param compute_v how many iterations wait in order to recompute variance-covariance matrix.
-#' @param initial_temperature initial temperature of the algorithm.
-#' @param final_temperature final temperature of the algorithm.
-#' @param restart_if_stuck how many iterations wait before restarting from last best parameters value if the algorithm stucks.
-#' @param save_history whether to save full history of the algorithm.
+#' Defines a set of user-configurable options to control the behavior of the Simulated Annealing (SA)
+#' routine used in `gnlmsa` for global exploration of the parameter space in Generalized Non-Linear Models.
 #'
-#' @return a list containing the specified options.
+#' These settings govern the temperature schedule, frequency of variance updates, restart conditions,
+#' and tracking behavior during the annealing process.
+#'
+#' @param iterations Integer. Total number of iterations for the Simulated Annealing algorithm.
+#' @param compute_v Integer. Frequency (in iterations) at which the variance-covariance matrix used
+#'   for proposal generation is updated. Default is every 10% of total iterations.
+#' @param initial_temperature Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.
+#' @param final_temperature Numeric. Final value of the temperature at which the cooling schedule stops.
+#' @param restart_if_stuck Integer. Number of consecutive iterations without improvement after which
+#'   the algorithm restarts from the last best parameter vector. Helps escape local optima.
+#' @param save_history Logical. If \code{TRUE}, the full parameter and log-likelihood trajectory is stored.
+#'
+#' @return A list of class `"sa_control"` containing the control parameters to be used in the SA routine.
+#'
+#' @details
+#' These parameters influence the convergence and robustness of the SA-based global search.
+#' After reaching the final temperature or maximum iteration count, the best solution found
+#' can be passed to a Newton-Raphson or other local optimization method for refinement.
+#'
 #' @export
 sa_control <- function(iterations = 1000,
                        compute_v = floor(iterations/10),
@@ -47,58 +61,57 @@ sa_control <- function(iterations = 1000,
 
 
 
-#' Simulated Annealing for Generalized Non-Linear Models
+#' Simulated Annealing Optimization for Generalized Non-Linear Models
 #'
-#' @description
-#' Optimizes parameters of a generalized linear model with separate functions for mean and dispersion
-#' using simulated annealing. The algorithm explores the parameter space to find a candidate maximum point
-#' of the log-likelihood function.
+#' Performs parameter estimation for Generalized Non-Linear Models (GNLMs) using a Simulated Annealing (SA) algorithm.
+#' This global optimization technique searches for a maximum of the log-likelihood function by exploring the
+#' parameter space in a probabilistic way, before passing control to a local optimizer.
 #'
-#' @param y numerical vector of response values.
-#' @param X design matrix for the mean model.
-#' @param Z design matrix for the dispersion model.
-#' @param family a [`family_gnlmsa`] object.
-#' @param f_mu predictor function for the mean component.
-#' @param J_mu (optional) Jacobian of `f_mu` with respect to the parameters.
-#' @param H_mu (optional) Hessian of `f_mu` with respect to the parameters.
-#' @param f_phi predictor function for the dispersion component.
-#' @param J_phi (optional) Jacobian of `f_phi` with respect to the parameters.
-#' @param H_phi (optional) Hessian of `f_phi` with respect to the parameters.
-#' @param beta_start initial values for the parameters of the mean component.
-#' @param lower_mu lower bounds for the parameters of the mean component.
-#' @param upper_mu upper bounds for the parameters of the mean component.
-#' @param gamma_start initial values for the parameters of the dispersion component.
-#' @param lower_phi lower bounds for the parameters of the dispersion component.
-#' @param upper_phi upper bounds for the parameters of the dispersion component.
-#' @param mult numerical vector multipliers of errors in Simulated Annealing algorithm.
-#' @param nsim number of Simulated Annealing simulations to perform (possibly in parallel).
-#' @param sa_control list of control parameters for Simulated Annealing algorithm, created with `sa_control()`
-#' @param expected logical indicating whether to use expected (`expected = TRUE`, default) or observed (`expected = FALSE`) hessian.
-#' @param verbose logical indicating whether to print progress information.
+#' @param y Numeric vector of response values.
+#' @param X Numeric design matrix for the mean component.
+#' @param Z Numeric design matrix for the dispersion component.
+#' @param family An object of class [`family_gnlmsa`] that defines the distribution, link functions, and relevant derivatives.
+#' @param f_mu Predictor function for the mean component.
+#' @param J_mu (Optional) Jacobian of \code{f_mu}. Should return an \eqn{n \times k} matrix.
+#' @param H_mu (Optional) Hessian of \code{f_mu}. Should return a list of \eqn{n} Hessian matrices.
+#' @param f_phi Predictor function for the dispersion component.
+#' @param J_phi (Optional) Jacobian of \code{f_phi}.
+#' @param H_phi (Optional) Hessian of \code{f_phi}.
+#' @param beta_start Initial values for parameters of the mean component.
+#' @param lower_mu Numeric vector defining lower bounds for the mean parameters.
+#' @param upper_mu Numeric vector defining upper bounds for the mean parameters.
+#' @param gamma_start Initial values for parameters of the dispersion component.
+#' @param lower_phi Numeric vector defining lower bounds for the dispersion parameters.
+#' @param upper_phi Numeric vector defining upper bounds for the dispersion parameters.
+#' @param mult Multipliers for the proposal variance in the SA algorithm.
+#' @param nsim Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).
+#' @param sa_control A list of control parameters for the SA routine, as returned by [sa_control()].
+#' @param expected Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.
+#' @param verbose Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.
 #'
 #' @details
-#' The function implements a Simulated Annealing algorithm for finding the values of the parameters that possibly maximize the
-#' log-likelihood of a Generalized Non-Linear model. Those values can be used as starting value in order to converge to a possibly global maximum via other optimizations algorithms.
+#' The SA algorithm operates on a transformed parameter space: all constrained parameters are mapped
+#' to \eqn{\mathbb{R}} via bijective transformations to ensure feasibility.
 #'
-#' The algorithm maps between constrained and unconstrained parameter spaces to respect the bounds
-#' specified by `lower_mu`, `upper_mu`, `lower_phi`, and `upper_phi`.
+#' At intervals determined by `sa_control$compute_v`, the algorithm estimates a local variance-covariance
+#' matrix from the (expected or observed) Hessian of the log-likelihood and uses it to adapt the proposal distribution.
 #'
-#' At regular intervals (controlled by `sa_control$compute_v`), the algorithm recomputes the
-#' variance-covariance matrix used for the proposal distribution based on the Hessian of the
-#' log-likelihood.
+#' If no improvement is detected after a certain number of iterations (`restart_if_stuck`), the algorithm
+#' restarts from the best parameter configuration found so far. At the end of the annealing schedule,
+#' the solution can be passed to a local optimizer (e.g., Newton-Raphson).
 #'
-#' @return A list with class "sa" containing:
-#' \item{par}{Estimated parameters}
-#' \item{beta}{Estimated parameters for the mean component}
-#' \item{gamma}{Estimated parameters for the dispersion component}
-#' \item{loglik}{Maximum log-likelihood value found}
-#' \item{eta}{Predictor for the mean component}
-#' \item{mu}{Fitted mean values}
-#' \item{vi}{Predictor for the dispersion component}
-#' \item{phi}{Fitted dispersion values}
-#' \item{iterations}{Number of iterations performed}
-#' \item{history}{Vector of log-likelihood values at each iteration (if `save_history = TRUE`)}
-#' \item{control}{Control parameters used for the algorithm.}
+#' @return A list of class `"sa"` with elements:
+#' \describe{
+#'   \item{par}{Estimated parameter vector (concatenated \code{beta} and \code{gamma}).}
+#'   \item{beta, gamma}{Estimated parameters for the mean and dispersion components, respectively.}
+#'   \item{loglik}{Final log-likelihood value.}
+#'   \item{eta, mu}{Nonlinear predictor and fitted values for the mean component.}
+#'   \item{vi, phi}{Nonlinear predictor and fitted values for the dispersion component.}
+#'   \item{iterations}{Total number of iterations performed.}
+#'   \item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
+#'   \item{control}{Control parameters used during optimization.}
+#' }
+#'
 #'
 #' @examples
 #' \dontrun{

@@ -34,7 +34,6 @@ A list with S3 class \code{"link-gnlm"} containing the following components:
 \description{
 This function creates a link function object similar to \code{stats::make.link()} but extends it by
 including the second derivative of the mean with respect to eta (\code{mu2.eta2}).
-This is useful for generalized non-linear models where higher-order derivatives are required.
 }
 \note{
 This function extends \code{stats::make.link()} by including the \code{mu2.eta2} component,

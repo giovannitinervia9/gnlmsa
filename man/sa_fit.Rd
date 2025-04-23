@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulated_annealing.R
 \name{sa_fit}
 \alias{sa_fit}
-\title{Simulated Annealing for Generalized Non-Linear Models}
+\title{Simulated Annealing Optimization for Generalized Non-Linear Models}
 \usage{
 sa_fit(
   y,
@@ -29,77 +29,76 @@ sa_fit(
 )
 }
 \arguments{
-\item{y}{numerical vector of response values.}
+\item{y}{Numeric vector of response values.}
 
-\item{X}{design matrix for the mean model.}
+\item{X}{Numeric design matrix for the mean component.}
 
-\item{Z}{design matrix for the dispersion model.}
+\item{Z}{Numeric design matrix for the dispersion component.}
 
-\item{family}{a \code{\link{family_gnlmsa}} object.}
+\item{family}{An object of class \code{\link{family_gnlmsa}} that defines the distribution, link functions, and relevant derivatives.}
 
-\item{f_mu}{predictor function for the mean component.}
+\item{f_mu}{Predictor function for the mean component.}
 
-\item{J_mu}{(optional) Jacobian of \code{f_mu} with respect to the parameters.}
+\item{J_mu}{(Optional) Jacobian of \code{f_mu}. Should return an \eqn{n \times k} matrix.}
 
-\item{H_mu}{(optional) Hessian of \code{f_mu} with respect to the parameters.}
+\item{H_mu}{(Optional) Hessian of \code{f_mu}. Should return a list of \eqn{n} Hessian matrices.}
 
-\item{f_phi}{predictor function for the dispersion component.}
+\item{f_phi}{Predictor function for the dispersion component.}
 
-\item{J_phi}{(optional) Jacobian of \code{f_phi} with respect to the parameters.}
+\item{J_phi}{(Optional) Jacobian of \code{f_phi}.}
 
-\item{H_phi}{(optional) Hessian of \code{f_phi} with respect to the parameters.}
+\item{H_phi}{(Optional) Hessian of \code{f_phi}.}
 
-\item{beta_start}{initial values for the parameters of the mean component.}
+\item{beta_start}{Initial values for parameters of the mean component.}
 
-\item{lower_mu}{lower bounds for the parameters of the mean component.}
+\item{lower_mu}{Numeric vector defining lower bounds for the mean parameters.}
 
-\item{upper_mu}{upper bounds for the parameters of the mean component.}
+\item{upper_mu}{Numeric vector defining upper bounds for the mean parameters.}
 
-\item{gamma_start}{initial values for the parameters of the dispersion component.}
+\item{gamma_start}{Initial values for parameters of the dispersion component.}
 
-\item{lower_phi}{lower bounds for the parameters of the dispersion component.}
+\item{lower_phi}{Numeric vector defining lower bounds for the dispersion parameters.}
 
-\item{upper_phi}{upper bounds for the parameters of the dispersion component.}
+\item{upper_phi}{Numeric vector defining upper bounds for the dispersion parameters.}
 
-\item{mult}{numerical vector multipliers of errors in Simulated Annealing algorithm.}
+\item{mult}{Multipliers for the proposal variance in the SA algorithm.}
 
-\item{nsim}{number of Simulated Annealing simulations to perform (possibly in parallel).}
+\item{nsim}{Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).}
 
-\item{sa_control}{list of control parameters for Simulated Annealing algorithm, created with \code{sa_control()}}
+\item{sa_control}{A list of control parameters for the SA routine, as returned by \code{\link[=sa_control]{sa_control()}}.}
 
-\item{expected}{logical indicating whether to use expected (\code{expected = TRUE}, default) or observed (\code{expected = FALSE}) hessian.}
+\item{expected}{Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.}
 
-\item{verbose}{logical indicating whether to print progress information.}
+\item{verbose}{Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.}
 }
 \value{
-A list with class "sa" containing:
-\item{par}{Estimated parameters}
-\item{beta}{Estimated parameters for the mean component}
-\item{gamma}{Estimated parameters for the dispersion component}
-\item{loglik}{Maximum log-likelihood value found}
-\item{eta}{Predictor for the mean component}
-\item{mu}{Fitted mean values}
-\item{vi}{Predictor for the dispersion component}
-\item{phi}{Fitted dispersion values}
-\item{iterations}{Number of iterations performed}
-\item{history}{Vector of log-likelihood values at each iteration (if \code{save_history = TRUE})}
-\item{control}{Control parameters used for the algorithm.}
+A list of class \code{"sa"} with elements:
+\describe{
+\item{par}{Estimated parameter vector (concatenated \code{beta} and \code{gamma}).}
+\item{beta, gamma}{Estimated parameters for the mean and dispersion components, respectively.}
+\item{loglik}{Final log-likelihood value.}
+\item{eta, mu}{Nonlinear predictor and fitted values for the mean component.}
+\item{vi, phi}{Nonlinear predictor and fitted values for the dispersion component.}
+\item{iterations}{Total number of iterations performed.}
+\item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
+\item{control}{Control parameters used during optimization.}
+}
 }
 \description{
-Optimizes parameters of a generalized linear model with separate functions for mean and dispersion
-using simulated annealing. The algorithm explores the parameter space to find a candidate maximum point
-of the log-likelihood function.
+Performs parameter estimation for Generalized Non-Linear Models (GNLMs) using a Simulated Annealing (SA) algorithm.
+This global optimization technique searches for a maximum of the log-likelihood function by exploring the
+parameter space in a probabilistic way, before passing control to a local optimizer.
 }
 \details{
-The function implements a Simulated Annealing algorithm for finding the values of the parameters that possibly maximize the
-log-likelihood of a Generalized Non-Linear model. Those values can be used as starting value in order to converge to a possibly global maximum via other optimizations algorithms.
+The SA algorithm operates on a transformed parameter space: all constrained parameters are mapped
+to \eqn{\mathbb{R}} via bijective transformations to ensure feasibility.
 
-The algorithm maps between constrained and unconstrained parameter spaces to respect the bounds
-specified by \code{lower_mu}, \code{upper_mu}, \code{lower_phi}, and \code{upper_phi}.
+At intervals determined by \code{sa_control$compute_v}, the algorithm estimates a local variance-covariance
+matrix from the (expected or observed) Hessian of the log-likelihood and uses it to adapt the proposal distribution.
 
-At regular intervals (controlled by \code{sa_control$compute_v}), the algorithm recomputes the
-variance-covariance matrix used for the proposal distribution based on the Hessian of the
-log-likelihood.
+If no improvement is detected after a certain number of iterations (\code{restart_if_stuck}), the algorithm
+restarts from the best parameter configuration found so far. At the end of the annealing schedule,
+the solution can be passed to a local optimizer (e.g., Newton-Raphson).
 }
 \examples{
 \dontrun{

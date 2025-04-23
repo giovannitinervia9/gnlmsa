@@ -24,7 +24,7 @@
 #' @param expected logical indicating whether to use the expected (default, `expected = TRUE`) or the observed (`expected = FALSE`) in the optimization algorithm.
 #' @param verbose logical indicating whether to print progress information.
 #' @param beta_names (optional) character vector containing the names of parameters of mean component. Must be of the same length of `beta_start`, `lower_mu` and `upper_mu`.
-#' @param beta_names (optional) character vector containing the names of parameters of dispersion component. Must be of the same length of `gamma_start`, `lower_phi` and `upper_phi`.
+#' @param gamma_names (optional) character vector containing the names of parameters of dispersion component. Must be of the same length of `gamma_start`, `lower_phi` and `upper_phi`.
 #'
 #' @returns A list.
 #' @export

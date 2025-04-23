@@ -79,7 +79,9 @@ gnlmsa(
 
 \item{verbose}{logical indicating whether to print progress information.}
 
-\item{beta_names}{(optional) character vector containing the names of parameters of dispersion component. Must be of the same length of \code{gamma_start}, \code{lower_phi} and \code{upper_phi}.}
+\item{beta_names}{(optional) character vector containing the names of parameters of mean component. Must be of the same length of \code{beta_start}, \code{lower_mu} and \code{upper_mu}.}
+
+\item{gamma_names}{(optional) character vector containing the names of parameters of dispersion component. Must be of the same length of \code{gamma_start}, \code{lower_phi} and \code{upper_phi}.}
 }
 \value{
 A list.

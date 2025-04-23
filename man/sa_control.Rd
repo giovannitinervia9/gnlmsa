@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulated_annealing.R
 \name{sa_control}
 \alias{sa_control}
-\title{Options for Simulated Annealing algorithm}
+\title{Control Parameters for the Simulated Annealing Algorithm}
 \usage{
 sa_control(
   iterations = 1000,
@@ -14,21 +14,32 @@ sa_control(
 )
 }
 \arguments{
-\item{iterations}{integer indicating the number of iterations to perform.}
+\item{iterations}{Integer. Total number of iterations for the Simulated Annealing algorithm.}
 
-\item{compute_v}{how many iterations wait in order to recompute variance-covariance matrix.}
+\item{compute_v}{Integer. Frequency (in iterations) at which the variance-covariance matrix used
+for proposal generation is updated. Default is every 10\% of total iterations.}
 
-\item{initial_temperature}{initial temperature of the algorithm.}
+\item{initial_temperature}{Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.}
 
-\item{final_temperature}{final temperature of the algorithm.}
+\item{final_temperature}{Numeric. Final value of the temperature at which the cooling schedule stops.}
 
-\item{restart_if_stuck}{how many iterations wait before restarting from last best parameters value if the algorithm stucks.}
+\item{restart_if_stuck}{Integer. Number of consecutive iterations without improvement after which
+the algorithm restarts from the last best parameter vector. Helps escape local optima.}
 
-\item{save_history}{whether to save full history of the algorithm.}
+\item{save_history}{Logical. If \code{TRUE}, the full parameter and log-likelihood trajectory is stored.}
 }
 \value{
-a list containing the specified options.
+A list of class \code{"sa_control"} containing the control parameters to be used in the SA routine.
 }
 \description{
-Options for Simulated Annealing algorithm
+Defines a set of user-configurable options to control the behavior of the Simulated Annealing (SA)
+routine used in \code{gnlmsa} for global exploration of the parameter space in Generalized Non-Linear Models.
+}
+\details{
+These settings govern the temperature schedule, frequency of variance updates, restart conditions,
+and tracking behavior during the annealing process.
+
+These parameters influence the convergence and robustness of the SA-based global search.
+After reaching the final temperature or maximum iteration count, the best solution found
+can be passed to a Newton-Raphson or other local optimization method for refinement.
 }
