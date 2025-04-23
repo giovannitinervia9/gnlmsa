@@ -161,9 +161,9 @@ gnlmsa <- function (y, X, Z, family,
                expected = expected, verbose = verbose)
 
   nr <- tryCatch(gnlmsa_fit(y = y, X = X, Z = Z, family = gnlmsa_Gamma("identity"),
-                            f_mu = cobb_douglas()$f, J_mu = cobb_douglas()$J,
-                            H_mu = cobb_douglas()$H,
-                            f_phi = Linear()$f, J_phi = Linear()$J, H_phi = Linear()$H,
+                            f_mu = f_mu, J_mu = J_mu,
+                            H_mu = H_mu,
+                            f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
                             beta_start = sa$beta, gamma_start = sa$gamma,
                             maxit = 100, tol = 1e-05, expected = TRUE),
                  error = function(e) "FAILED")
