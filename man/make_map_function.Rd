@@ -7,79 +7,71 @@
 make_map_function(lower, upper)
 }
 \arguments{
-\item{lower}{a numerical vector containing the lower bounds for each parameter.
+\item{lower}{A numeric vector containing the lower bounds for each parameter.
 Use \code{-Inf} for unbounded below parameters.}
 
-\item{upper}{a numerical vector containing the upper bounds for each parameter.
+\item{upper}{A numeric vector containing the upper bounds for each parameter.
 Use \code{Inf} for unbounded above parameters.}
 }
 \value{
-A list containing three functions:
-\describe{
-\item{\code{map(par)}}{A function that maps parameters from the constrained space to the real line.}
-\item{\code{invert(par)}}{A function that maps parameters from the real line back to the constrained space.}
-\item{\code{jacobian(par)}}{A function that returns the first derivative of the transformation for each parameter.}
-\item{\code{hessian(par)}}{A function that returns the second derivative of the trasformation for each parameter.}
-}
-All four functions expect a numeric vector \code{par} of the same length as \code{lower} and \code{upper}.
+A list containing six functions: \code{map}, \code{invert}, \code{map_jacobian},
+\code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 }
 \description{
-This function generates a set of transformation functions that map parameters from various constrained spaces
-to the real line and vice versa. It automatically identifies the appropriate transformation for each parameter
-based on the provided bounds.
+Returns a set of transformation functions that map parameters from various constrained spaces
+to the real line and vice versa, along with their first and second derivatives.
 }
 \details{
 The function automatically selects the appropriate transformation for each parameter based on its bounds:
-\enumerate{
-\item For parameters with finite bounds \verb{(lower[i], upper[i])}, \code{\link[=map_interval]{map_interval()}} is used.
-\item For parameters bounded only below \verb{(lower[i], Inf)}, \code{\link[=map_positive]{map_positive()}} is used.
-\item For parameters bounded only above \verb{(-Inf, upper[i])}, \code{\link[=map_negative]{map_negative()}} is used.
-\item For completely unbounded parameters \verb{(-Inf, Inf)}, the \code{identity} function is used.
+\itemize{
+\item For parameters bounded both below and above \code{(lower[i], upper[i])}, \code{\link[=map_interval]{map_interval()}} is used.
+\item For parameters bounded only below \code{(lower[i], Inf)}, \code{\link[=map_positive]{map_positive()}} is used.
+\item For parameters bounded only above \code{(-Inf, upper[i])}, \code{\link[=map_negative]{map_negative()}} is used.
+\item For completely unbounded parameters \code{(-Inf, Inf)}, the identity function is used.
 }
 
-The \code{map()} function transforms the constrained parameters to unconstrained values on the real line.
-The \code{invert()} function performs the inverse transformation from the real line back to the constrained space.
-The \code{jacobian()} function returns the first derivatives of the transformation for each parameter.
-The \code{hessian()} function returns the second derivatives of the transformation.
+The returned list contains six functions:
+\describe{
+\item{map(par)}{Maps parameters from the constrained space to the real line.}
+\item{invert(par)}{Maps parameters from the real line back to the constrained space.}
+\item{map_jacobian(par)}{Returns the first derivative (Jacobian) of the forward transformation.}
+\item{map_hessian(par)}{Returns the second derivative (Hessian) of the forward transformation.}
+\item{invert_jacobian(par)}{Returns the first derivative (Jacobian) of the inverse transformation.}
+\item{invert_hessian(par)}{Returns the second derivative (Hessian) of the inverse transformation.}
+}
+Each function expects a numeric vector \code{par} of the same length as \code{lower} and \code{upper}.
 }
 \examples{
-# Create mapping functions for parameters with different constraints
+# Define constraints for parameters
 lower <- c(-Inf, 0, -1)
 upper <- c(Inf, Inf, 1)
 
-# Interpretation:
-# - First parameter: unbounded (-Inf, Inf)
-# - Second parameter: bounded below (0, Inf)
-# - Third parameter: bounded on both sides (-1, 1)
-
+# Create mapping functions
 map_functions <- make_map_function(lower, upper)
 
-# Extract the mapping functions
+# Extract the individual functions
 map <- map_functions$map
 invert <- map_functions$invert
-jacobian <- map_functions$jacobian
-hessian <- map_functions$hessian
+map_jacobian <- map_functions$map_jacobian
+map_hessian <- map_functions$map_hessian
+invert_jacobian <- map_functions$invert_jacobian
+invert_hessian <- map_functions$invert_hessian
 
 # Define parameter values in the constrained space
 x <- c(0, 3, 0.2)
 
 # Map to unconstrained space
 y <- map(x)
-y
 
-# Map back to constrained space
+# Invert mapping back to constrained space
 x_recovered <- invert(y)
-x_recovered
 
-# Verify roundtrip accuracy
-x - x_recovered
+# Verify that the mapping is bijective
 all.equal(x, x_recovered)
 
-# Calculate the Jacobian at point x
-j <- jacobian(x)
-j
-
-# Calculate the Hessian at point x
-h <- hessian(x)
-h
+# Compute derivatives
+j_map <- map_jacobian(x)
+h_map <- map_hessian(x)
+j_invert <- invert_jacobian(y)
+h_invert <- invert_hessian(y)
 }

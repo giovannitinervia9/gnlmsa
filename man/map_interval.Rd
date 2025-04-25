@@ -2,57 +2,36 @@
 % Please edit documentation in R/helper_functions.R
 \name{map_interval}
 \alias{map_interval}
-\title{Maps values between open intervals and the real line}
+\title{Create mapping functions between open intervals and the real line}
 \usage{
-map_interval(
-  x,
-  lower,
-  upper,
-  inverse = FALSE,
-  derivative = FALSE,
-  second_derivative = FALSE
-)
-}
-\arguments{
-\item{x}{A numerical vector of values to map. When \code{inverse = FALSE}, values must be strictly
-between \code{lower} and \code{upper}. When \code{inverse = TRUE}, values can be any real number.}
-
-\item{lower}{A numerical vector containing the lower bounds of the open intervals.}
-
-\item{upper}{A numerical vector containing the upper bounds of the open intervals.
-Must be greater than the corresponding \code{lower} values.}
-
-\item{inverse}{Logical; if \code{TRUE}, maps from the real line to the open interval. Default is \code{FALSE}.}
-
-\item{derivative}{Logical; if \code{TRUE}, returns the first derivative of the forward transformation.}
-
-\item{second_derivative}{Logical; if \code{TRUE}, returns the second derivative of the forward transformation.
-Only valid when \code{inverse = FALSE}.}
+map_interval()
 }
 \value{
-A numeric vector of mapped values, first or second derivatives depending on arguments.
+A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
+\code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 }
 \description{
-This function implements a bijective transformation between an open interval \verb{(lower, upper)}
-and the real line.
+Returns a list of functions implementing a bijective transformation between
+an open interval \verb{(lower, upper)} and the real line, together with their derivatives and inverses.
 }
 \details{
-The forward mapping (default) is:
-\deqn{f(x) = \log\left(\dfrac{x - \texttt{lower}}{\texttt{upper} - x}\right)}
-
-Its inverse is:
-\deqn{f^{-1}(z) = \dfrac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}
-
-First derivative:
-\deqn{f'(x) = \dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}
-
-Second derivative:
-\deqn{f''(x) = - \dfrac{(\texttt{lower} - \texttt{upper})((\texttt{lower} + \texttt{upper} - 2x))}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}
+The returned list contains:
+\describe{
+\item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \eqn{f(x) = \log\left(\frac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
+\item{invert(x, lower, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \frac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
+\item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \eqn{f'(x) = \frac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
+\item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \eqn{f''(x) = -\frac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
+\item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map (with respect to z).}
+\item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map (with respect to z).}
+}
 }
 \examples{
+f <- map_interval()
 x <- seq(0.1, 0.9, length.out = 10)
-map_interval(x, 0, 1)
-map_interval(x, 0, 1, derivative = TRUE)
-map_interval(x, 0, 1, second_derivative = TRUE)
-map_interval(map_interval(x, 0, 1), 0, 1, inverse = TRUE)
+f$map(x, lower = 0, upper = 1)
+f$invert(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
+f$map_jacobian(x, lower = 0, upper = 1)
+f$invert_jacobian(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
+f$map_hessian(x, lower = 0, upper = 1)
+f$invert_hessian(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
 }

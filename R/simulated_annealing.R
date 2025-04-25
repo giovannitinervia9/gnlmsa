@@ -238,7 +238,7 @@ sa_fit <- function (y, X, Z, family,
   map_functions <- make_map_function(lower, upper)
   map <- map_functions$map
   invert <- map_functions$invert
-  jacobian <- map_functions$jacobian
+  jacobian <- map_functions$map_jacobian
 
   npar_mu <- length(lower_mu)
   npar_phi <- length(lower_phi)

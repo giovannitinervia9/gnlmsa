@@ -34,13 +34,13 @@ upper <- c(Inf, Inf, 1)
 map_functions <- make_map_function(lower, upper)
 map <- map_functions$map
 invert <- map_functions$invert
-jacobian <- map_functions$jacobian
+map_jacobian <- map_functions$map_jacobian
 
 # Map parameters to unbounded space
 mapped_pars <- map(par)
 
 # Calculate Jacobian adjustment for covariance matrix based on delta method
-j <- diag(jacobian(par))
+j <- diag(map_jacobian(par))
 v <- diag(1e-06, length(par))
 mapped_v <- j \%*\% v \%*\% t(j)
 

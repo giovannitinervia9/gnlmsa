@@ -2,53 +2,37 @@
 % Please edit documentation in R/helper_functions.R
 \name{map_positive}
 \alias{map_positive}
-\title{Maps values between half-open intervals and the real line}
+\title{Create mapping functions between half-open intervals and the real line}
 \usage{
-map_positive(
-  x,
-  lower = 0,
-  inverse = FALSE,
-  derivative = FALSE,
-  second_derivative = FALSE
-)
-}
-\arguments{
-\item{x}{A numerical vector of values to map. When \code{inverse = FALSE}, values must be strictly
-greater than \code{lower}. When \code{inverse = TRUE}, values can be any real number.}
-
-\item{lower}{A numerical value representing the lower bound of the half-open interval.
-Default is 0.}
-
-\item{inverse}{Logical; if \code{TRUE}, maps from the real line to the half-open interval. Default is \code{FALSE}.}
-
-\item{derivative}{Logical; if \code{TRUE}, returns the first derivative of the forward transformation.}
-
-\item{second_derivative}{Logical; if \code{TRUE}, returns the second derivative of the forward transformation.}
+map_positive()
 }
 \value{
-A numeric vector of mapped values, first or second derivatives depending on arguments.
+A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
+\code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 }
 \description{
-This function implements a bijective transformation between a half-open interval \verb{(lower, Inf)}
-and the real line using a logarithmic transformation.
+Returns a list of functions implementing a bijective transformation between
+a half-open interval \verb{(lower, Inf)} and the real line using a logarithmic transformation,
+together with their derivatives and inverses.
 }
 \details{
-Forward transformation:
-\deqn{f(x) = \log(x - \texttt{lower})}
-
-Inverse transformation:
-\deqn{f^{-1}(z) = \texttt{lower} + \exp(z)}
-
-First derivative:
-\deqn{f'(x) = \dfrac{1}{x - \texttt{lower}}}
-
-Second derivative:
-\deqn{f''(x) = -\dfrac{1}{(x - \texttt{lower})^2}}
+The returned list contains:
+\describe{
+\item{map(x, lower)}{Maps from (lower, Inf) to the real line: \eqn{f(x) = \log(x - \texttt{lower})}}
+\item{invert(x, lower)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
+\item{map_jacobian(x, lower)}{First derivative of the forward map: \eqn{f'(x) = 1/(x - \texttt{lower})}}
+\item{map_hessian(x, lower)}{Second derivative of the forward map: \eqn{f''(x) = -1/(x - \texttt{lower})^2}}
+\item{invert_jacobian(x, lower)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = \exp(z)}}
+\item{invert_hessian(x, lower)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = \exp(z)}}
+}
 }
 \examples{
+f <- map_positive()
 x <- 1:5
-map_positive(x)
-map_positive(x, derivative = TRUE)
-map_positive(x, second_derivative = TRUE)
-map_positive(map_positive(x), inverse = TRUE)
+f$map(x, lower = 0)
+f$invert(f$map(x, lower = 0), lower = 0)
+f$map_jacobian(x, lower = 0)
+f$invert_jacobian(f$map(x, lower = 0), lower = 0)
+f$map_hessian(x, lower = 0)
+f$invert_hessian(f$map(x, lower = 0), lower = 0)
 }

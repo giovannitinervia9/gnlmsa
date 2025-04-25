@@ -103,58 +103,65 @@ make_hessian <- function(f) function(X, theta) {
 
 
 
-#' Maps values between open intervals and the real line
+#' Create mapping functions between open intervals and the real line
 #'
-#' This function implements a bijective transformation between an open interval `(lower, upper)`
-#' and the real line.
-#'
-#' @param x A numerical vector of values to map. When `inverse = FALSE`, values must be strictly
-#'   between `lower` and `upper`. When `inverse = TRUE`, values can be any real number.
-#' @param lower A numerical vector containing the lower bounds of the open intervals.
-#' @param upper A numerical vector containing the upper bounds of the open intervals.
-#'   Must be greater than the corresponding `lower` values.
-#' @param inverse Logical; if `TRUE`, maps from the real line to the open interval. Default is `FALSE`.
-#' @param derivative Logical; if `TRUE`, returns the first derivative of the forward transformation.
-#' @param second_derivative Logical; if `TRUE`, returns the second derivative of the forward transformation.
-#'   Only valid when `inverse = FALSE`.
+#' Returns a list of functions implementing a bijective transformation between
+#' an open interval `(lower, upper)` and the real line, together with their derivatives and inverses.
 #'
 #' @details
-#' The forward mapping (default) is:
-#' \deqn{f(x) = \log\left(\dfrac{x - \texttt{lower}}{\texttt{upper} - x}\right)}
+#' The returned list contains:
+#' \describe{
+#'   \item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \eqn{f(x) = \log\left(\frac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
+#'   \item{invert(x, lower, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \frac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
+#'   \item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \eqn{f'(x) = \frac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
+#'   \item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \eqn{f''(x) = -\frac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
+#'   \item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map (with respect to z).}
+#'   \item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map (with respect to z).}
+#' }
 #'
-#' Its inverse is:
-#' \deqn{f^{-1}(z) = \dfrac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}
+#' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
+#'   \code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 #'
-#' First derivative:
-#' \deqn{f'(x) = \dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}
-#'
-#' Second derivative:
-#' \deqn{f''(x) = - \dfrac{(\texttt{lower} - \texttt{upper})((\texttt{lower} + \texttt{upper} - 2x))}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}
-#'
-#' @return A numeric vector of mapped values, first or second derivatives depending on arguments.
 #' @export
 #'
 #' @examples
+#' f <- map_interval()
 #' x <- seq(0.1, 0.9, length.out = 10)
-#' map_interval(x, 0, 1)
-#' map_interval(x, 0, 1, derivative = TRUE)
-#' map_interval(x, 0, 1, second_derivative = TRUE)
-#' map_interval(map_interval(x, 0, 1), 0, 1, inverse = TRUE)
+#' f$map(x, lower = 0, upper = 1)
+#' f$invert(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
+#' f$map_jacobian(x, lower = 0, upper = 1)
+#' f$invert_jacobian(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
+#' f$map_hessian(x, lower = 0, upper = 1)
+#' f$invert_hessian(f$map(x, lower = 0, upper = 1), lower = 0, upper = 1)
+map_interval <- function() {
 
-map_interval <- function(x, lower, upper, inverse = FALSE,
-                         derivative = FALSE, second_derivative = FALSE) {
-  if (any(lower >= upper)) stop("lower must be less than upper")
-  if (derivative && second_derivative) stop("Only one of `derivative` or `second_derivative` can be TRUE")
-
-  if (second_derivative) {
-    ((lower - upper)*(lower + upper - 2*x))/(((x - lower)^2)*((upper - x)^2))
-  } else if (derivative) {
-    (upper - lower) / ((x - lower) * (upper - x))
-  } else if (inverse) {
-    (lower + upper * exp(x)) / (1 + exp(x))
-  } else {
+  map <- function(x, lower, upper) {
     log((x - lower) / (upper - x))
   }
+
+  invert <- function(x, lower, upper) {
+    (lower + upper * exp(x)) / (1 + exp(x))
+  }
+
+  map_jacobian <- function(x, lower, upper) {
+    (upper - lower) / ((x - lower) * (upper - x))
+  }
+
+  map_hessian <- function(x, lower, upper) {
+    ((lower - upper)*(lower + upper - 2*x))/(((x - lower)^2)*((upper - x)^2))
+  }
+
+  invert_jacobian <- function(x, lower, upper) {
+    (exp(x)*(upper - lower))/(exp(x) + lower)^2
+  }
+
+  invert_hessian <- function(x, lower, upper) {
+    (exp(x)*(exp(x) - 1)*(lower - upper))/(exp(x) + 1)^3
+  }
+
+  list(map = map, invert = invert,
+       map_jacobian = map_jacobian, map_hessian = map_hessian,
+       invert_jacobian = invert_jacobian, invert_hessian = invert_hessian)
 }
 
 
@@ -163,57 +170,68 @@ map_interval <- function(x, lower, upper, inverse = FALSE,
 
 
 
-#' Maps values between half-open intervals and the real line
+#' Create mapping functions between half-open intervals and the real line
 #'
-#' This function implements a bijective transformation between a half-open interval `(lower, Inf)`
-#' and the real line using a logarithmic transformation.
-#'
-#' @param x A numerical vector of values to map. When `inverse = FALSE`, values must be strictly
-#'   greater than `lower`. When `inverse = TRUE`, values can be any real number.
-#' @param lower A numerical value representing the lower bound of the half-open interval.
-#'   Default is 0.
-#' @param inverse Logical; if `TRUE`, maps from the real line to the half-open interval. Default is `FALSE`.
-#' @param derivative Logical; if `TRUE`, returns the first derivative of the forward transformation.
-#' @param second_derivative Logical; if `TRUE`, returns the second derivative of the forward transformation.
+#' Returns a list of functions implementing a bijective transformation between
+#' a half-open interval `(lower, Inf)` and the real line using a logarithmic transformation,
+#' together with their derivatives and inverses.
 #'
 #' @details
-#' Forward transformation:
-#' \deqn{f(x) = \log(x - \texttt{lower})}
+#' The returned list contains:
+#' \describe{
+#'   \item{map(x, lower)}{Maps from (lower, Inf) to the real line: \eqn{f(x) = \log(x - \texttt{lower})}}
+#'   \item{invert(x, lower)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
+#'   \item{map_jacobian(x, lower)}{First derivative of the forward map: \eqn{f'(x) = 1/(x - \texttt{lower})}}
+#'   \item{map_hessian(x, lower)}{Second derivative of the forward map: \eqn{f''(x) = -1/(x - \texttt{lower})^2}}
+#'   \item{invert_jacobian(x, lower)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = \exp(z)}}
+#'   \item{invert_hessian(x, lower)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = \exp(z)}}
+#' }
 #'
-#' Inverse transformation:
-#' \deqn{f^{-1}(z) = \texttt{lower} + \exp(z)}
+#' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
+#'   \code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 #'
-#' First derivative:
-#' \deqn{f'(x) = \dfrac{1}{x - \texttt{lower}}}
-#'
-#' Second derivative:
-#' \deqn{f''(x) = -\dfrac{1}{(x - \texttt{lower})^2}}
-#'
-#' @return A numeric vector of mapped values, first or second derivatives depending on arguments.
 #' @export
 #'
 #' @examples
+#' f <- map_positive()
 #' x <- 1:5
-#' map_positive(x)
-#' map_positive(x, derivative = TRUE)
-#' map_positive(x, second_derivative = TRUE)
-#' map_positive(map_positive(x), inverse = TRUE)
+#' f$map(x, lower = 0)
+#' f$invert(f$map(x, lower = 0), lower = 0)
+#' f$map_jacobian(x, lower = 0)
+#' f$invert_jacobian(f$map(x, lower = 0), lower = 0)
+#' f$map_hessian(x, lower = 0)
+#' f$invert_hessian(f$map(x, lower = 0), lower = 0)
+map_positive <- function() {
 
-map_positive <- function(x, lower = 0, inverse = FALSE,
-                         derivative = FALSE, second_derivative = FALSE) {
-  if (derivative && second_derivative) stop("Only one of `derivative` or `second_derivative` can be TRUE")
-
-  if (second_derivative) {
-    -1 / (x - lower)^2
-  } else if (derivative) {
-    1 / (x - lower)
-  } else if (inverse) {
-    lower + exp(x)
-  } else {
+  map <- function(x, lower) {
     log(x - lower)
   }
-}
 
+  invert <- function(x, lower) {
+    lower + exp(x)
+  }
+
+  map_jacobian <- function(x, lower) {
+    1/(x - lower)
+  }
+
+  map_hessian <- function(x, lower) {
+    -1 / (x - lower)^2
+  }
+
+  invert_jacobian <- function(x, lower) {
+    exp(x)
+  }
+
+  invert_hessian <- function(x, lower) {
+    exp(x)
+  }
+
+  list(map = map, invert = invert,
+       map_jacobian = map_jacobian, map_hessian = map_hessian,
+       invert_jacobian = invert_jacobian, invert_hessian = invert_hessian)
+
+}
 
 
 
@@ -221,58 +239,68 @@ map_positive <- function(x, lower = 0, inverse = FALSE,
 
 
 
-#' Maps values between half-open intervals and the real line
+#' Create mapping functions between half-open intervals and the real line
 #'
-#' This function implements a bijective transformation between a half-open interval `(-Inf, upper)`
-#' and the real line using a logarithmic transformation.
-#'
-#' @param x A numerical vector of values to map. When `inverse = FALSE`, values must be strictly
-#'   less than `upper`. When `inverse = TRUE`, values can be any real number.
-#' @param upper A numerical value representing the upper bound of the half-open interval. Default is 0.
-#' @param inverse Logical; if `TRUE`, maps from the real line to the half-open interval.
-#' @param derivative Logical; if `TRUE`, returns the first derivative of the forward transformation.
-#' @param second_derivative Logical; if `TRUE`, returns the second derivative of the forward transformation.
+#' Returns a list of functions implementing a bijective transformation between
+#' a half-open interval `(-Inf, upper)` and the real line using a logarithmic transformation,
+#' together with their derivatives and inverses.
 #'
 #' @details
-#' Forward transformation:
-#' \deqn{f(x) = \log(\texttt{upper} - x)}
+#' The returned list contains:
+#' \describe{
+#'   \item{map(x, upper)}{Maps from (-Inf, upper) to the real line: \eqn{f(x) = \log(\texttt{upper} - x)}}
+#'   \item{invert(x, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{upper} - \exp(z)}}
+#'   \item{map_jacobian(x, upper)}{First derivative of the forward map: \eqn{f'(x) = -1/(\texttt{upper} - x)}}
+#'   \item{map_hessian(x, upper)}{Second derivative of the forward map: \eqn{f''(x) = -1/(\texttt{upper} - x)^2}}
+#'   \item{invert_jacobian(x, upper)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = -\exp(z)}}
+#'   \item{invert_hessian(x, upper)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = -\exp(z)}}
+#' }
 #'
-#' Inverse transformation:
-#' \deqn{f^{-1}(z) = \texttt{upper} - \exp(z)}
+#' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
+#'   \code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 #'
-#' First derivative:
-#' \deqn{f'(x) = -\dfrac{1}{\texttt{upper} - x}}
-#'
-#' Second derivative:
-#' \deqn{f''(x) = -\dfrac{1}{(\texttt{upper} - x)^2}}
-#'
-#' @return A numeric vector of mapped values, first or second derivatives depending on arguments.
 #' @export
 #'
 #' @examples
+#' f <- map_negative()
 #' x <- -(5:1)
-#' map_negative(x)
-#' map_negative(x, derivative = TRUE)
-#' map_negative(x, second_derivative = TRUE)
-#' map_negative(map_negative(x), inverse = TRUE)
+#' f$map(x, upper = 0)
+#' f$invert(f$map(x, upper = 0), upper = 0)
+#' f$map_jacobian(x, upper = 0)
+#' f$invert_jacobian(f$map(x, upper = 0), upper = 0)
+#' f$map_hessian(x, upper = 0)
+#' f$invert_hessian(f$map(x, upper = 0), upper = 0)
+map_negative <- function() {
 
-map_negative <- function(x, upper = 0,
-                         inverse = FALSE,
-                         derivative = FALSE,
-                         second_derivative = FALSE) {
-  if (derivative && second_derivative) stop("Only one of `derivative` or `second_derivative` can be TRUE")
-
-  if (second_derivative) {
-    -1 / (upper - x)^2
-  } else if (derivative) {
-    -1 / (upper - x)
-  } else if (inverse) {
-    upper - exp(x)
-  } else {
+  map <- function(x, upper) {
     log(upper - x)
   }
-}
 
+  invert <- function(x, upper) {
+    upper - exp(x)
+  }
+
+  map_jacobian <- function(x, upper) {
+    -1 / (upper - x)
+  }
+
+  map_hessian <- function(x, upper) {
+    -1 / (upper - x)^2
+  }
+
+  invert_jacobian <- function(x, upper) {
+    -exp(x)
+  }
+
+  invert_hessian <- function(x, upper) {
+    -exp(x)
+  }
+
+  list(map = map, invert = invert,
+       map_jacobian = map_jacobian, map_hessian = map_hessian,
+       invert_jacobian = invert_jacobian, invert_hessian = invert_hessian)
+
+}
 
 
 
@@ -282,80 +310,73 @@ map_negative <- function(x, upper = 0,
 
 #' Create mapping functions between constrained parameter spaces and the real line
 #'
-#' This function generates a set of transformation functions that map parameters from various constrained spaces
-#' to the real line and vice versa. It automatically identifies the appropriate transformation for each parameter
-#' based on the provided bounds.
+#' Returns a set of transformation functions that map parameters from various constrained spaces
+#' to the real line and vice versa, along with their first and second derivatives.
 #'
-#' @param lower a numerical vector containing the lower bounds for each parameter.
-#'   Use `-Inf` for unbounded below parameters.
-#' @param upper a numerical vector containing the upper bounds for each parameter.
-#'   Use `Inf` for unbounded above parameters.
+#' @param lower A numeric vector containing the lower bounds for each parameter.
+#'   Use \code{-Inf} for unbounded below parameters.
+#' @param upper A numeric vector containing the upper bounds for each parameter.
+#'   Use \code{Inf} for unbounded above parameters.
 #'
 #' @details
 #' The function automatically selects the appropriate transformation for each parameter based on its bounds:
+#' \itemize{
+#'   \item For parameters bounded both below and above \code{(lower[i], upper[i])}, [map_interval()] is used.
+#'   \item For parameters bounded only below \code{(lower[i], Inf)}, [map_positive()] is used.
+#'   \item For parameters bounded only above \code{(-Inf, upper[i])}, [map_negative()] is used.
+#'   \item For completely unbounded parameters \code{(-Inf, Inf)}, the identity function is used.
+#' }
 #'
-#' 1. For parameters with finite bounds `(lower[i], upper[i])`, [map_interval()] is used.
-#' 2. For parameters bounded only below `(lower[i], Inf)`, [map_positive()] is used.
-#' 3. For parameters bounded only above `(-Inf, upper[i])`, [map_negative()] is used.
-#' 4. For completely unbounded parameters `(-Inf, Inf)`, the `identity` function is used.
+#' The returned list contains six functions:
+#' \describe{
+#'   \item{map(par)}{Maps parameters from the constrained space to the real line.}
+#'   \item{invert(par)}{Maps parameters from the real line back to the constrained space.}
+#'   \item{map_jacobian(par)}{Returns the first derivative (Jacobian) of the forward transformation.}
+#'   \item{map_hessian(par)}{Returns the second derivative (Hessian) of the forward transformation.}
+#'   \item{invert_jacobian(par)}{Returns the first derivative (Jacobian) of the inverse transformation.}
+#'   \item{invert_hessian(par)}{Returns the second derivative (Hessian) of the inverse transformation.}
+#' }
+#' Each function expects a numeric vector \code{par} of the same length as \code{lower} and \code{upper}.
 #'
-#' The `map()` function transforms the constrained parameters to unconstrained values on the real line.
-#' The `invert()` function performs the inverse transformation from the real line back to the constrained space.
-#' The `jacobian()` function returns the first derivatives of the transformation for each parameter.
-#' The `hessian()` function returns the second derivatives of the transformation.
-#'
-#' @return A list containing three functions:
-#'   \describe{
-#'     \item{`map(par)`}{A function that maps parameters from the constrained space to the real line.}
-#'     \item{`invert(par)`}{A function that maps parameters from the real line back to the constrained space.}
-#'     \item{`jacobian(par)`}{A function that returns the first derivative of the transformation for each parameter.}
-#'     \item{`hessian(par)`}{A function that returns the second derivative of the trasformation for each parameter.}
-#'   }
-#'   All four functions expect a numeric vector `par` of the same length as `lower` and `upper`.
+#' @return A list containing six functions: \code{map}, \code{invert}, \code{map_jacobian},
+#'   \code{map_hessian}, \code{invert_jacobian}, \code{invert_hessian}.
 #'
 #' @export
 #'
 #' @examples
-#' # Create mapping functions for parameters with different constraints
+#' # Define constraints for parameters
 #' lower <- c(-Inf, 0, -1)
 #' upper <- c(Inf, Inf, 1)
 #'
-#' # Interpretation:
-#' # - First parameter: unbounded (-Inf, Inf)
-#' # - Second parameter: bounded below (0, Inf)
-#' # - Third parameter: bounded on both sides (-1, 1)
-#'
+#' # Create mapping functions
 #' map_functions <- make_map_function(lower, upper)
 #'
-#' # Extract the mapping functions
+#' # Extract the individual functions
 #' map <- map_functions$map
 #' invert <- map_functions$invert
-#' jacobian <- map_functions$jacobian
-#' hessian <- map_functions$hessian
+#' map_jacobian <- map_functions$map_jacobian
+#' map_hessian <- map_functions$map_hessian
+#' invert_jacobian <- map_functions$invert_jacobian
+#' invert_hessian <- map_functions$invert_hessian
 #'
 #' # Define parameter values in the constrained space
 #' x <- c(0, 3, 0.2)
 #'
 #' # Map to unconstrained space
 #' y <- map(x)
-#' y
 #'
-#' # Map back to constrained space
+#' # Invert mapping back to constrained space
 #' x_recovered <- invert(y)
-#' x_recovered
 #'
-#' # Verify roundtrip accuracy
-#' x - x_recovered
+#' # Verify that the mapping is bijective
 #' all.equal(x, x_recovered)
 #'
-#' # Calculate the Jacobian at point x
-#' j <- jacobian(x)
-#' j
-#'
-#' # Calculate the Hessian at point x
-#' h <- hessian(x)
-#' h
-make_map_function <- function(lower, upper){
+#' # Compute derivatives
+#' j_map <- map_jacobian(x)
+#' h_map <- map_hessian(x)
+#' j_invert <- invert_jacobian(y)
+#' h_invert <- invert_hessian(y)
+make_map_function <- function(lower, upper) {
   if (length(lower) != length(upper)) {
     stop("lower and upper must be of the same length")
   }
@@ -363,54 +384,77 @@ make_map_function <- function(lower, upper){
   if (any(lower >= upper)) stop("lower must be less than upper")
 
   npar <- length(lower)
-  f_string <- character(npar)
-  f_string_inverse <- f_string
-  j_string <- f_string
-  h_string <- f_string
-  for(i in 1:npar){
+  map_string <- character(npar)
+  invert_string <- map_string
+  map_j_string <- map_string
+  map_h_string <- map_string
+  invert_j_string <- map_string
+  invert_h_string <- map_string
+
+  for (i in 1:npar) {
     if (is.infinite(lower[i]) & is.infinite(upper[i])) {
-      f_string[i] <- f_string_inverse[i] <- paste0("identity(par[", deparse(i), "])")
-      j_string[i] <- "1"
-      h_string[i] <- 0
-    }
-    else if (!is.infinite(lower[i]) & is.infinite(upper[i])) {
-      f_string[i] <- paste0("map_positive(par[", deparse(i), "], inverse = FALSE, lower = ", deparse(lower[i]), ")")
-      f_string_inverse[i] <- paste0("map_positive(par[", deparse(i), "], inverse = TRUE, lower = ", deparse(lower[i]), ")")
-      j_string[i] <- paste0("map_positive(par[", deparse(i), "], inverse = FALSE, derivative = TRUE, lower = ", deparse(lower[i]), ")")
-      h_string[i] <- paste0("map_positive(par[", deparse(i), "], inverse = FALSE, second_derivative = TRUE, lower = ", deparse(lower[i]), ")")
-    }
-    else if (is.infinite(lower[i]) & !is.infinite(upper[i])) {
-      f_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, upper = ", deparse(upper[i]), ")")
-      f_string_inverse[i] <- paste0("map_negative(par[", deparse(i), "], inverse = TRUE, upper = ", deparse(upper[i]), ")")
-      j_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, derivative = TRUE, upper = ", deparse(upper[i]), ")")
-      h_string[i] <- paste0("map_negative(par[", deparse(i), "], inverse = FALSE, second_derivative = TRUE, upper = ", deparse(upper[i]), ")")
-    }
-    else if(!is.infinite(lower[i]) & !is.infinite(upper[i])){
-      f_string[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = FALSE)")
-      f_string_inverse[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = TRUE)")
-      j_string[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = FALSE, derivative = TRUE)")
-      h_string[i] <- paste0("map_interval(par[", deparse(i), "], lower = ", deparse(lower[i]), ", upper = ", deparse(upper[i]), ", inverse = FALSE, second_derivative = TRUE)")
+      map_string[i] <- invert_string[i] <- paste0("par[", deparse(i), "]")
+      map_j_string[i] <- invert_j_string[i] <- "1"
+      map_h_string[i] <- invert_h_string[i] <- "0"
+    } else if (!is.infinite(lower[i]) & is.infinite(upper[i])) {
+      map_string[i] <- paste0("map_positive()$map(par[", deparse(i), "], ", deparse(lower[i]), ")")
+      invert_string[i] <- paste0("map_positive()$invert(par[", deparse(i), "], ", deparse(lower[i]), ")")
+      map_j_string[i] <- paste0("map_positive()$map_jacobian(par[", deparse(i), "], ", deparse(lower[i]), ")")
+      map_h_string[i] <- paste0("map_positive()$map_hessian(par[", deparse(i), "], ", deparse(lower[i]), ")")
+      invert_j_string[i] <- paste0("map_positive()$invert_jacobian(par[", deparse(i), "], ", deparse(lower[i]), ")")
+      invert_h_string[i] <- paste0("map_positive()$invert_hessian(par[", deparse(i), "], ", deparse(lower[i]), ")")
+    } else if (is.infinite(lower[i]) & !is.infinite(upper[i])) {
+      map_string[i] <- paste0("map_negative()$map(par[", deparse(i), "], ", deparse(upper[i]), ")")
+      invert_string[i] <- paste0("map_negative()$invert(par[", deparse(i), "], ", deparse(upper[i]), ")")
+      map_j_string[i] <- paste0("map_negative()$map_jacobian(par[", deparse(i), "], ", deparse(upper[i]), ")")
+      map_h_string[i] <- paste0("map_negative()$map_hessian(par[", deparse(i), "], ", deparse(upper[i]), ")")
+      invert_j_string[i] <- paste0("map_negative()$invert_jacobian(par[", deparse(i), "], ", deparse(upper[i]), ")")
+      invert_h_string[i] <- paste0("map_negative()$invert_hessian(par[", deparse(i), "], ", deparse(upper[i]), ")")
+    } else if (!is.infinite(lower[i]) & !is.infinite(upper[i])) {
+      map_string[i] <- paste0("map_interval()$map(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
+      invert_string[i] <- paste0("map_interval()$invert(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
+      map_j_string[i] <- paste0("map_interval()$map_jacobian(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
+      map_h_string[i] <- paste0("map_interval()$map_hessian(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
+      invert_j_string[i] <- paste0("map_interval()$invert_jacobian(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
+      invert_h_string[i] <- paste0("map_interval()$invert_hessian(par[", deparse(i), "], ", deparse(lower[i]), ", ", deparse(upper[i]), ")")
     }
   }
+
   map <- function(par) {
-    code <- paste0("c(", paste(f_string, collapse = ", "), ")")
+    code <- paste0("c(", paste(map_string, collapse = ", "), ")")
     eval(parse(text = code))
   }
+
   invert <- function(par) {
-    code <- paste0("c(", paste(f_string_inverse, collapse = ", "), ")")
-    eval(parse(text = code))
-  }
-  jacobian <- function(par) {
-    code <- paste0("c(", paste(j_string, collapse = ", "), ")")
+    code <- paste0("c(", paste(invert_string, collapse = ", "), ")")
     eval(parse(text = code))
   }
 
-  hessian <- function(par) {
-    code <- paste0("c(", paste(h_string, collapse = ", "), ")")
+  map_jacobian <- function(par) {
+    code <- paste0("c(", paste(map_j_string, collapse = ", "), ")")
     eval(parse(text = code))
   }
 
-  list(map = map, invert = invert, jacobian = jacobian, hessian = hessian)
+  map_hessian <- function(par) {
+    code <- paste0("c(", paste(map_h_string, collapse = ", "), ")")
+    eval(parse(text = code))
+  }
+
+  invert_jacobian <- function(par) {
+    code <- paste0("c(", paste(invert_j_string, collapse = ", "), ")")
+    eval(parse(text = code))
+  }
+
+  invert_hessian <- function(par) {
+    code <- paste0("c(", paste(invert_h_string, collapse = ", "), ")")
+    eval(parse(text = code))
+  }
+
+  list(
+    map = map, invert = invert, map_jacobian = map_jacobian,
+    map_hessian = map_hessian, invert_jacobian = invert_jacobian,
+    invert_hessian = invert_hessian
+  )
 }
 
 
@@ -446,13 +490,13 @@ make_map_function <- function(lower, upper){
 #' map_functions <- make_map_function(lower, upper)
 #' map <- map_functions$map
 #' invert <- map_functions$invert
-#' jacobian <- map_functions$jacobian
+#' map_jacobian <- map_functions$map_jacobian
 #'
 #' # Map parameters to unbounded space
 #' mapped_pars <- map(par)
 #'
 #' # Calculate Jacobian adjustment for covariance matrix based on delta method
-#' j <- diag(jacobian(par))
+#' j <- diag(map_jacobian(par))
 #' v <- diag(1e-06, length(par))
 #' mapped_v <- j %*% v %*% t(j)
 #'
