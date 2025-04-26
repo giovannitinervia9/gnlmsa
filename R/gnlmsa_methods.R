@@ -176,7 +176,7 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
   if (test == "Wald") {
 
     par <- object$coefficients
-    v <- vcov(object, expected)
+    v <- vcov.gnlmsa(object, expected)
     map_functions <- object$map_functions
 
     map <- map_functions$map
@@ -239,7 +239,54 @@ coef.gnlmsa <- function(object, ...) {
 
 
 
+#' Extract Fitted Values from a Generalized Non-Linear Model
+#'
+#' Returns fitted values from a fitted Generalized Non-Linear Model (GNLM) object of class `"gnlmsa"`,
+#' including the mean component, the dispersion component, and the variance function evaluated at the fitted values.
+#'
+#' @param object An object of class `"gnlmsa"`, typically returned by [gnlmsa()].
+#' @param type Character string specifying the type of fitted values to return.
+#'   Must be one of \code{"mu"} (default), \code{"phi"}, \code{"variance"}, or \code{"all"}.
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' Available options for \code{type} are:
+#' \itemize{
+#'   \item \code{"mu"}: Fitted values for the mean component \eqn{\hat{\mu}}.
+#'   \item \code{"phi"}: Fitted values for the dispersion component \eqn{\hat{\phi}}.
+#'   \item \code{"variance"}: Variance evaluated at the fitted mean and dispersion, using the `variance()` function
+#'         defined by the family.
+#'   \item \code{"all"}: A data frame containing \code{mu}, \code{phi}, and \code{variance}.
+#' }
+#'
+#' @return Depending on \code{type}:
+#' \itemize{
+#'   \item A numeric vector of fitted values (\code{"mu"}, \code{"phi"}, or \code{"variance"}).
+#'   \item A data frame containing all three components if \code{type = "all"}.
+#' }
+#'
+#'
+#' @export
+fitted.gnlmsa <- function(object, type = c("mu", "phi", "variance", "all"), ...) {
 
+  type <- match.arg(type)
+
+  if (type == "mu") {
+    object$mu
+  }
+  else if (type == "phi") {
+    object$phi
+  }
+  else if (type == "variance") {
+    object$family$variance(object$mu, object$phi)
+  }
+  else {
+    data.frame(mu = object$mu,
+               phi = object$phi,
+               variance = object$family$variance(object$mu, object$phi))
+  }
+
+}
 
 
 

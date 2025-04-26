@@ -2,6 +2,7 @@
 
 S3method(coef,gnlmsa)
 S3method(confint,gnlmsa)
+S3method(fitted,gnlmsa)
 S3method(print,family_gnlmsa)
 S3method(print,gnlmsa)
 S3method(vcov,gnlmsa)
