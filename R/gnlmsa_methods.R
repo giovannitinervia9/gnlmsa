@@ -50,7 +50,6 @@ print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
 
 
 
-
 #-------------------------------------------------------------------------------
 
 
@@ -134,6 +133,118 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
 
 
 #-------------------------------------------------------------------------------
+
+
+
+#' Confidence Intervals for Generalized Non-Linear Model Parameters
+#'
+#' Computes confidence intervals for the parameters of a fitted Generalized Non-Linear Model (GNLM) object
+#' of class `"gnlmsa"`, based on the variance-covariance matrix of the parameter estimates.
+#'
+#' @param object An object of class `"gnlmsa"` returned by [gnlmsa()].
+#' @param parm Parameters for which confidence intervals are required. Currently ignored; confidence intervals are computed for all parameters.
+#' @param level Confidence level required. Default is \code{0.95} for 95% confidence intervals.
+#' @param test Character string specifying the type of test to use. Currently, only `"Wald"` is supported.
+#'   If a different test is specified, a warning is issued and the function falls back to `"Wald"`.
+#' @param expected Logical. If \code{TRUE} (default), uses the expected Fisher information to compute standard errors;
+#'   otherwise uses the observed information.
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' Currently, only Wald-type confidence intervals are implemented.
+#'
+#' Confidence intervals are computed on the transformed (unconstrained) scale and then mapped back
+#' to the original (possibly constrained) parameter space.
+#'
+#' The variance-covariance matrix used in the computation accounts for the parameter transformations,
+#' via the Jacobian of the transformation at the point estimates.
+#'
+#' @return A data frame with two columns, giving the lower and upper bounds of the confidence intervals
+#' for each parameter.
+#'
+#'
+#' @export
+confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "LRT"), expected = TRUE, ...) {
+
+  test <- match.arg(test)
+
+  if (test != "Wald") {
+    test <- "Wald"
+    warning("Currently only Wald confindence intervals are supported. Switching to Wald confidence intervals.")
+  }
+
+  if (test == "Wald") {
+
+    par <- object$coefficients
+    v <- vcov(object, expected)
+    map_functions <- object$map_functions
+
+    map <- map_functions$map
+    invert <- map_functions$invert
+    map_jacobian <- map_functions$map_jacobian
+    map_functions
+
+    j <- map_jacobian(par)
+
+    v_map <- diag(j)%*%v%*%t(diag(j))
+    se_map <- sqrt(diag(v_map))
+    sig.level <- 1 - level
+    q <- qnorm(1 - sig.level/2)
+
+    inf <- invert(map(par) - q*se_map)
+    sup <- invert(map(par) + q*se_map)
+
+
+    out <- data.frame(inf = inf, sup = sup)
+    colnames(out) <- paste0(colnames(out), "_", paste0(c(sig.level/2*100, (1 - sig.level/2)*100), "%"))
+    rownames(out) <- object$coef_names
+
+
+  }
+
+  out
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
+#' Extract Model Coefficients from a Generalized Non-Linear Model
+#'
+#' Returns the estimated model coefficients from a fitted Generalized Non-Linear Model (GNLM)
+#' object of class `"gnlmsa"`.
+#'
+#' @param object An object of class `"gnlmsa"`, typically returned by [gnlmsa()].
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' This function extracts and returns the estimated coefficients for both the mean and dispersion components,
+#' combined into a single named numeric vector.
+#'
+#' The coefficients are returned on the original (constrained) parameter space.
+#'
+#' @return A named numeric vector of model coefficients.
+#'
+#' @export
+coef.gnlmsa <- function(object, ...) {
+  object$coefficients
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
 
 
 

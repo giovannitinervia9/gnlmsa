@@ -214,7 +214,7 @@ gnlmsa <- function (y, X, Z, family,
   df.residuals <- nobs - npar
   df <- npar
 
-  out <- list(coef = c(beta, gamma),
+  out <- list(coefficients = c(beta, gamma),
               beta = beta,
               gamma = gamma,
               loglik = loglik,
