@@ -290,10 +290,185 @@ fitted.gnlmsa <- function(object, type = c("mu", "phi", "variance", "all"), ...)
 
 
 
+#-------------------------------------------------------------------------------
 
 
 
+#' Extract Log-Likelihood from a Generalized Non-Linear Model
+#'
+#' Returns the log-likelihood of a fitted Generalized Non-Linear Model (GNLM) object of class `"gnlmsa"`.
+#'
+#' @param object An object of class `"gnlmsa"`, typically returned by [gnlmsa()].
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' The function returns the final log-likelihood value achieved during model fitting.
+#' Attributes `"df"` (degrees of freedom, equal to the number of estimated parameters)
+#' and `"nobs"` (number of observations) are attached to the returned object.
+#'
+#' The result is assigned class `"logLik"` to ensure compatibility with generic model evaluation
+#' functions such as [AIC()], [BIC()], and [anova()].
+#'
+#' @return An object of class `"logLik"`, which is a numeric scalar representing the
+#'   maximized log-likelihood, with attributes:
+#'   \itemize{
+#'     \item \code{df}: Degrees of freedom (number of parameters estimated).
+#'     \item \code{nobs}: Number of observations used to fit the model.
+#'   }
+#'
+#' @seealso [gnlmsa()], [AIC()], [BIC()]
+#'
+#' @export
+logLik.gnlmsa <- function(object, ...) {
+  val <- object$loglik
+  df <- length(object$coefficients)
+  attr(val, "df") <- df
+  attr(val, "nobs") <- object$nobs
+  class(val) <- "logLik"
+  val
+}
 
+
+
+#-------------------------------------------------------------------------------
+
+
+#' Summarize a Fitted Generalized Non-Linear Model
+#'
+#' Produces a summary for a fitted Generalized Non-Linear Model (GNLM) object of class `"gnlmsa"`,
+#' including estimates, standard errors, confidence intervals, and model fit statistics.
+#'
+#' @param object An object of class `"gnlmsa"`, typically returned by [gnlmsa()].
+#' @param level Confidence level for the confidence intervals (default is \code{0.95} for 95% intervals).
+#' @param test Character string specifying the type of test for confidence intervals.
+#'   Currently, only `"Wald"` is supported. If another test is specified, it is ignored with a warning.
+#' @param expected Logical. If \code{TRUE} (default), uses the expected Fisher information to compute standard errors and intervals;
+#'   otherwise uses the observed information.
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' The summary includes:
+#' \itemize{
+#'   \item Parameter estimates for the mean (\eqn{\mu}) and dispersion (\eqn{\phi}) components.
+#'   \item Standard errors computed from the variance-covariance matrix.
+#'   \item Confidence intervals for the parameters based on the Wald method.
+#'   \item Log-likelihood, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC).
+#'   \item An indication of whether Newton–Raphson optimization succeeded or fallback to Simulated Annealing was necessary.
+#' }
+#'
+#' @return A list of class `"summary.gnlmsa"` containing:
+#' \describe{
+#'   \item{coefficients.mu}{A data frame with estimates, standard errors, and confidence intervals for the mean component.}
+#'   \item{coefficients.phi}{A data frame with estimates, standard errors, and confidence intervals for the dispersion component.}
+#'   \item{nr_failed}{Logical; \code{TRUE} if Newton–Raphson optimization failed.}
+#'   \item{nr_better}{Logical; \code{TRUE} if Newton–Raphson provided a better solution than Simulated Annealing.}
+#'   \item{loglik}{Final log-likelihood value.}
+#'   \item{aic}{Akaike Information Criterion.}
+#'   \item{bic}{Bayesian Information Criterion.}
+#'   \item{family}{The model family object used for fitting.}
+#' }
+#'
+#' @importFrom stats logLik AIC BIC
+#'
+#' @export
+summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"), expected = TRUE, ...) {
+
+  test <- match.arg(test)
+  if(test != "Wald") test <- "Wald"
+
+  family <- object$family
+  npar_mu <- object$npar_mu
+  beta <- object$beta
+  gamma <- object$gamma
+
+  v <- diag(vcov.gnlmsa(object, expected))
+
+  se_beta <- sqrt(v[1:npar_mu])
+  se_gamma <- sqrt(v[(npar_mu + 1):length(v)])
+
+  ci <- confint.gnlmsa(object, level = level, test = test, expected = expected)
+
+  ci_beta <- ci[1:npar_mu, ]
+  ci_gamma <- ci[(npar_mu + 1):length(v), ]
+
+  coefficients.mu <- data.frame(est = beta,
+                                se = se_beta,
+                                ci_beta)
+
+  coefficients.phi <- data.frame(est = gamma,
+                                 se = se_gamma,
+                                 ci_gamma)
+
+  sig.level <- 1 - level
+
+  ci_names <- paste0(c("inf", "sup"), "_", paste0(c(sig.level/2*100, (1 - sig.level/2)*100), "%"))
+  colnames(coefficients.mu) <- colnames(coefficients.phi) <- c("Estimate", "SE", ci_names)
+
+
+  out <- list(coefficients.mu = coefficients.mu,
+              coefficients.phi = coefficients.phi,
+              nr_failed = object$nr_failed,
+              nr_better = object$nr_better,
+              loglik = as.numeric(logLik(object)),
+              aic = AIC(object),
+              bic = BIC(object),
+              family = family,
+              test = test
+  )
+  class(out) <- "summary.gnlmsa"
+  out
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+#' Print Method for Summary of Generalized Non-Linear Models
+#'
+#' Displays a formatted summary for a fitted Generalized Non-Linear Model (GNLM) object of class `"summary.gnlmsa"`.
+#' The output includes the model family, the optimization status, the estimated coefficients with their
+#' standard errors and confidence intervals, and key model fit statistics.
+#'
+#' @param x An object of class `"summary.gnlmsa"`, typically returned by [summary.gnlmsa()].
+#' @param digits Integer. The number of significant digits to use when printing.
+#'   Defaults to \code{max(3L, getOption("digits") - 3L)}.
+#' @param ... Further arguments passed to or from other methods (currently unused).
+#'
+#' @details
+#' The printed summary includes:
+#' \itemize{
+#'   \item The model family used.
+#'   \item The status of the Newton–Raphson optimization (success or fallback to Simulated Annealing).
+#'   \item Estimated coefficients for the mean and dispersion components, along with standard errors
+#'         and confidence intervals.
+#'   \item The type of test used for confidence intervals (currently only Wald).
+#'   \item Log-likelihood, Akaike Information Criterion (AIC), and Bayesian Information Criterion (BIC) values.
+#' }
+#'
+#' @return The object \code{x} is returned invisibly.
+#' @export
+print.summary.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
+
+  cat("\nGeneralized Non-Linear Model")
+  cat(paste0("\nFamily: ", x$family$family), "\n")
+
+  if (!x$nr_failed) {
+    cat("\nNewton-Raphson optimization: SUCCEEDED\nReporting Newton-Raphson estimates\n")
+  } else {
+    cat("\nNewton-Raphson optimization: FAILED\nReporting Simulated Annealing estimates\n")
+  }
+
+  cat("\nCoefficients for mean component:\n")
+  printCoefmat(x$coefficients.mu, digits = digits)
+  cat("\nCoefficients for dispersion component:\n")
+  printCoefmat(x$coefficients.phi, digits = digits)
+  cat(paste0("\nConfidence interval: ", x$test, "\n"))
+  cat("\n")
+  print.default(c(loglik = x$loglik, AIC = x$aic, BIC = x$bic), digits = digits)
+  invisible(x)
+
+}
 
 
 
