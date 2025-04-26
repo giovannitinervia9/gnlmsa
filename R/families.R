@@ -124,6 +124,8 @@ print.family_gnlmsa <- function(x, ...){
 #'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
+#'
+#'   \item{simulate}{Function to simulate to be called by method `simulate`.}
 #' }
 #'
 #' @details
@@ -156,7 +158,7 @@ print.family_gnlmsa <- function(x, ...){
 #' gamma_fam2 <- gnlmsa_Gamma(link_mu = "log", link_phi = "sqrt")
 #'
 #' @seealso [family_gnlmsa()], [gnlmsa()].
-#'
+#' @importFrom stats rgamma
 #' @export
 gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 
@@ -292,6 +294,12 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 
   }
 
+  simfun <- function(object, nsim) {
+    mu <- object$mu
+    phi <- object$phi
+    rgamma(nsim*length(mu), phi, phi/mu)
+  }
+
 
   out <- list(family = family,
 
@@ -313,7 +321,8 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
               loglik = loglik,
               grad_phi = grad_phi,
               hess_phi = hess_phi,
-              hess_mu_phi = hess_mu_phi)
+              hess_mu_phi = hess_mu_phi,
+              simfun = simfun)
   class(out) <- c("family_gnlmsa", "family")
   out
 }
@@ -323,4 +332,215 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 #-------------------------------------------------------------------------------
 
 
+#' Gaussian Family for Generalized Non-Linear Models
+#'
+#' Constructs a `family_gnlmsa` object for use with Gaussian-distributed response variables in
+#' Generalized Non-Linear Models (GNLMs). This family supports separate link functions for both
+#' the conditional mean \eqn{\mu} and the dispersion parameter \eqn{\phi}.
+#'
+#' @param link_mu A character string specifying the link function for the mean component \eqn{\mu}.
+#'   Must be one of `"inverse"` (default), `"log"`, `"identity"` or `"sqrt"`.
+#' @param link_phi A character string specifying the link function for the dispersion component \eqn{\phi}.
+#'   Must be one of `"log"` (default), `"sqrt"` or `"identity"`.
+#'
+#' @return An object of class `family_gnlmsa` (inheriting from `family`) with the following components:
+#' \describe{
+#'   \item{family}{Name of the family: `"gnlmsa_gaussian"`}
+#'
+#'   \item{link_mu}{Name of the link function used for the mean.}
+#'   \item{linkfun_mu}{Function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+#'   \item{linkinv_mu}{Inverse of the link function, mapping \eqn{\eta} to \eqn{\mu}.}
+#'   \item{mu.eta}{First derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{validmu}{Validator function for the mean: checks positivity and finiteness.}
+#'
+#'   \item{link_phi}{Name of the link function used for the dispersion.}
+#'   \item{linkfun_phi}{Function mapping \eqn{\phi} to the predictor \eqn{v}.}
+#'   \item{linkinv_phi}{Inverse of the link function, mapping \eqn{v} to \eqn{\phi}.}
+#'   \item{phi.vi}{First derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{validphi}{Validator function for the dispersion: checks positivity and finiteness.}
+#'
+#'   \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \phi_i}.}
+#'   \item{loglik}{Log-likelihood contribution function for each observation.}
+#'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
+#'
+#'   \item{simulate}{Function to simulate to be called by method `simulate`.}
+#' }
+#'
+#'
+#' @seealso [family_gnlmsa()], [gnlmsa()].
+#' @importFrom stats rnorm
+#' @export
+gnlmsa_gaussian <- function(link_mu = "identity", link_phi = "log"){
 
+  linktemp_mu <- substitute(link_mu)
+  linktemp_phi <- substitute(link_phi)
+
+  okLinks_mu <- c("inverse", "log", "sqrt", "identity")
+  okLinks_phi <- c("log", "sqrt", "identity")
+
+  family <- "gnlmsa_gaussian"
+
+  # create link for mu
+  if (!is.character(linktemp_mu)) {linktemp_mu <- deparse(linktemp_mu)}
+  if (linktemp_mu %in% okLinks_mu) {
+    stats_mu <- make_link(linktemp_mu)
+  }
+  else if (is.character(linktemp_mu)) {
+    stats_mu <- make_link(linktemp_mu)
+    linktemp_mu <- link_mu
+  }
+  else {
+    if (inherits(link_mu, "link-glm")) {
+      stats_mu <- link_mu
+      if (!is.null(stats_mu$name))
+        linktemp_mu <- stats_mu$name
+    }
+    else {
+      stop(gettextf("link \"%s\" for mu is not available for %s family; available links are %s",
+                    linktemp_mu, family, paste(sQuote(okLinks_mu), collapse = ", ")),
+           domain = NA)
+    }
+  }
+
+
+  # create link for phi
+  if (!is.character(linktemp_phi)) {
+    linktemp_phi <- deparse(linktemp_phi)
+  }
+  if (linktemp_phi %in% okLinks_phi) {
+    stats_phi <- make_link(linktemp_phi)
+  }
+  else if (is.character(linktemp_phi)) {
+    stats_phi <- make_link(linktemp_phi)
+    linktemp_phi <- link_phi
+  }
+  else {
+    if (inherits(link_phi, "link-glm")) {
+      stats_phi <- link_phi
+      if (!is.null(stats_phi$name))
+        linktemp_phi <- stats_phi$name
+    }
+    else {
+      stop(gettextf("link \"%s\" for phi is not available for %s family; available links are %s",
+                    linktemp_phi, family, paste(sQuote(okLinks_phi), collapse = ", ")),
+           domain = NA)
+    }
+  }
+
+
+  linkfun_mu <- stats_mu$linkfun
+  linkinv_mu <- stats_mu$linkinv
+  mu.eta <- stats_mu$mu.eta
+  mu2.eta2 <- stats_mu$mu2.eta2
+
+  linkfun_phi <- stats_phi$linkfun
+  linkinv_phi <- stats_phi$linkinv
+  phi.vi <- stats_phi$mu.eta
+  phi2.vi2 <- stats_phi$mu2.eta2
+
+  variance <- function(mu, phi) phi
+  validmu <- function(mu) all(is.finite(mu))
+  validphi <- function(phi) all(is.finite(phi)) && all(phi > 0)
+  loglik <- function(y, mu, phi){
+    -0.5*(log(2*pi) + log(phi) + (y - mu)^2/phi)
+  }
+
+  grad_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, phi.vi){
+    if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
+    w <- (1/phi - ((y - mu)^2)/phi^2)*phi.vi(vi)
+    j <- J_phi(Z, gamma)
+    -0.5*colSums(j*w)
+  }
+
+
+  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi,
+                       phi.vi, phi2.vi2, expected = TRUE) {
+    if (missing(J_phi)) J_phi <- make_jacobian(f_phi)
+    if (missing(H_phi)) H_phi <- make_hessian(f_phi)
+
+    j <- J_phi(Z, gamma)
+    phi_vi <- phi.vi(vi)
+
+
+
+    if (expected) {
+      w1 <- (-1/phi^2 + 2/phi^2)*phi_vi^2
+      h1 <- crossprod(j, w1 * j)
+      return(-0.5*h1)
+    } else {
+      w1 <- (-1/phi^2 + (2*(y - mu)^2)/phi^3)*phi_vi^2
+      h1 <- crossprod(j, w1 * j)
+      # observed part
+      w2 <- -1/phi^2 + (2*(y - mu)^2)/phi^3
+      h21 <- crossprod(j, j * w2 * phi2.vi2(vi))
+
+      H_list <- H_phi(Z, gamma)
+      h22 <- matrix(0, nrow = ncol(j), ncol = ncol(j))
+      for (i in seq_along(w2)) {
+        h22 <- h22 + w2[i] * phi_vi[i] * H_list[[i]]
+      }
+
+      -0.5*(h1 + h21 + h22)
+    }
+
+
+  }
+
+  hess_mu_phi <- function(y, X, Z, beta, gamma,
+                          mu, eta, phi, vi,
+                          f_mu, J_mu, f_phi, J_phi,
+                          mu.eta, phi.vi, expected = TRUE) {
+
+    if (expected) {
+      matrix(0, nrow = length(beta), ncol = length(gamma))
+    } else {
+      if (missing(J_mu)) {
+        J_mu <- make_jacobian(f_mu)
+      }
+      if (missing(J_phi)) {
+        J_phi <- make_jacobian(f_phi)
+      }
+      w <- ((y - mu)/phi^2)*mu.eta(eta)*phi.vi(vi)
+      jmu <- J_mu(X, beta)
+      jphi <- J_phi(Z, gamma)
+      crossprod(w*jmu, jphi)
+    }
+
+
+  }
+
+  simfun <- function(object, nsim) {
+    mu <- object$mu
+    phi <- object$phi
+    rnorm(nsim*length(mu), mu, sqrt(phi))
+  }
+
+  out <- list(family = family,
+
+              link_mu = linktemp_mu,
+              linkfun_mu = linkfun_mu,
+              linkinv_mu = linkinv_mu,
+              mu.eta = mu.eta,
+              mu2.eta2 = mu2.eta2,
+              validmu = validmu,
+
+              link_phi = linktemp_phi,
+              linkfun_phi = linkfun_phi,
+              linkinv_phi = linkinv_phi,
+              phi.vi = phi.vi,
+              phi2.vi2 = phi2.vi2,
+              validphi = validphi,
+
+              variance = variance,
+              loglik = loglik,
+              grad_phi = grad_phi,
+              hess_phi = hess_phi,
+              hess_mu_phi = hess_mu_phi,
+              simulate = simfun)
+  class(out) <- c("family_gnlmsa", "family")
+  out
+}

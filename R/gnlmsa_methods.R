@@ -447,6 +447,7 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
 #' }
 #'
 #' @return The object \code{x} is returned invisibly.
+#' @importFrom stats printCoefmat
 #' @export
 print.summary.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
 

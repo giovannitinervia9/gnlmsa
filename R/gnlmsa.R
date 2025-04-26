@@ -160,7 +160,7 @@ gnlmsa <- function (y, X, Z, family,
                mult = mult, nsim = nsim, sa_control = sa_control,
                expected = expected, verbose = verbose)
 
-  nr <- tryCatch(gnlmsa_fit(y = y, X = X, Z = Z, family = gnlmsa_Gamma("identity"),
+  nr <- tryCatch(gnlmsa_fit(y = y, X = X, Z = Z, family = family,
                             f_mu = f_mu, J_mu = J_mu,
                             H_mu = H_mu,
                             f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
@@ -173,7 +173,7 @@ gnlmsa <- function (y, X, Z, family,
     nr_better <- FALSE
     fit <- sa
     warning("\nNewton-Raphson optimization failed to optimize log-likelihood function.\n Try to use more iterations for Simulated Annealing algorithm.")
-  } else if (nr$loglik > sa$loglik) {
+  } else if (nr$loglik >= sa$loglik) {
     fit <- nr
     nr_better <- TRUE
     nr_failed <- FALSE
