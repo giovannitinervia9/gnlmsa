@@ -17,12 +17,12 @@ an open interval \verb{(lower, upper)} and the real line, together with their de
 \details{
 The returned list contains:
 \describe{
-\item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \eqn{f(x) = \log\left(\frac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
-\item{invert(x, lower, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \frac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
-\item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \eqn{f'(x) = \frac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
-\item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \eqn{f''(x) = -\frac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
-\item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map (with respect to z).}
-\item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map (with respect to z).}
+\item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \deqn{f(x) = \log\left(\dfrac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
+\item{invert(x, lower, upper)}{Inverse mapping: \deqn{f^{-1}(z) = \dfrac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
+\item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \deqn{f'(x) = \dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
+\item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \deqn{f''(x) = -\dfrac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
+\item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map: \deqn{(f^{-1})'(z) = \dfrac{e^z(\texttt{upper} - \texttt{lower})}{\left(1 + e^z\right)^2}}}
+\item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map: \deqn{(f^{-1})''(z) = \dfrac{e^z(e^z - 1)(\texttt{lower} - \texttt{upper})}{\left(1 + e^z\right)^3}}}
 }
 }
 \examples{

@@ -18,12 +18,12 @@ together with their derivatives and inverses.
 \details{
 The returned list contains:
 \describe{
-\item{map(x, lower)}{Maps from (lower, Inf) to the real line: \eqn{f(x) = \log(x - \texttt{lower})}}
-\item{invert(x, lower)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
-\item{map_jacobian(x, lower)}{First derivative of the forward map: \eqn{f'(x) = 1/(x - \texttt{lower})}}
-\item{map_hessian(x, lower)}{Second derivative of the forward map: \eqn{f''(x) = -1/(x - \texttt{lower})^2}}
-\item{invert_jacobian(x, lower)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = \exp(z)}}
-\item{invert_hessian(x, lower)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = \exp(z)}}
+\item{map(x, lower)}{Maps from (lower, Inf) to the real line: \deqn{f(x) = \log(x - \texttt{lower})}}
+\item{invert(x, lower)}{Inverse mapping: \deqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
+\item{map_jacobian(x, lower)}{First derivative of the forward map: \deqn{f'(x) = 1/(x - \texttt{lower})}}
+\item{map_hessian(x, lower)}{Second derivative of the forward map: \deqn{f''(x) = -1/(x - \texttt{lower})^2}}
+\item{invert_jacobian(x, lower)}{First derivative of the inverse map: \deqn{(f^{-1})'(z) = \exp(z)}}
+\item{invert_hessian(x, lower)}{Second derivative of the inverse map: \deqn{(f^{-1})''(z) = \exp(z)}}
 }
 }
 \examples{

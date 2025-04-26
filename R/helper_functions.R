@@ -111,12 +111,12 @@ make_hessian <- function(f) function(X, theta) {
 #' @details
 #' The returned list contains:
 #' \describe{
-#'   \item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \eqn{f(x) = \log\left(\frac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
-#'   \item{invert(x, lower, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \frac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
-#'   \item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \eqn{f'(x) = \frac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
-#'   \item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \eqn{f''(x) = -\frac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
-#'   \item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map (with respect to z).}
-#'   \item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map (with respect to z).}
+#'   \item{map(x, lower, upper)}{Maps from (lower, upper) to the real line: \deqn{f(x) = \log\left(\dfrac{x - \texttt{lower}}{\texttt{upper} - x}\right)}}
+#'   \item{invert(x, lower, upper)}{Inverse mapping: \deqn{f^{-1}(z) = \dfrac{\texttt{lower} + \texttt{upper} \cdot e^z}{1 + e^z}}}
+#'   \item{map_jacobian(x, lower, upper)}{First derivative of the forward map: \deqn{f'(x) = \dfrac{\texttt{upper} - \texttt{lower}}{(x - \texttt{lower})(\texttt{upper} - x)}}}
+#'   \item{map_hessian(x, lower, upper)}{Second derivative of the forward map: \deqn{f''(x) = -\dfrac{(\texttt{lower} - \texttt{upper})(\texttt{lower} + \texttt{upper} - 2x)}{(x - \texttt{lower})^2 (\texttt{upper} - x)^2}}}
+#'   \item{invert_jacobian(x, lower, upper)}{First derivative of the inverse map: \deqn{(f^{-1})'(z) = \dfrac{e^z(\texttt{upper} - \texttt{lower})}{\left(1 + e^z\right)^2}}}
+#'   \item{invert_hessian(x, lower, upper)}{Second derivative of the inverse map: \deqn{(f^{-1})''(z) = \dfrac{e^z(e^z - 1)(\texttt{lower} - \texttt{upper})}{\left(1 + e^z\right)^3}}}
 #' }
 #'
 #' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
@@ -152,11 +152,11 @@ map_interval <- function() {
   }
 
   invert_jacobian <- function(x, lower, upper) {
-    (exp(x)*(upper - lower))/(exp(x) + lower)^2
+    (exp(x)*(upper - lower))/(1 + exp(x))^2
   }
 
   invert_hessian <- function(x, lower, upper) {
-    (exp(x)*(exp(x) - 1)*(lower - upper))/(exp(x) + 1)^3
+    (exp(x)*(exp(x) - 1)*(lower - upper))/(1 + exp(x))^3
   }
 
   list(map = map, invert = invert,
@@ -179,12 +179,12 @@ map_interval <- function() {
 #' @details
 #' The returned list contains:
 #' \describe{
-#'   \item{map(x, lower)}{Maps from (lower, Inf) to the real line: \eqn{f(x) = \log(x - \texttt{lower})}}
-#'   \item{invert(x, lower)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
-#'   \item{map_jacobian(x, lower)}{First derivative of the forward map: \eqn{f'(x) = 1/(x - \texttt{lower})}}
-#'   \item{map_hessian(x, lower)}{Second derivative of the forward map: \eqn{f''(x) = -1/(x - \texttt{lower})^2}}
-#'   \item{invert_jacobian(x, lower)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = \exp(z)}}
-#'   \item{invert_hessian(x, lower)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = \exp(z)}}
+#'   \item{map(x, lower)}{Maps from (lower, Inf) to the real line: \deqn{f(x) = \log(x - \texttt{lower})}}
+#'   \item{invert(x, lower)}{Inverse mapping: \deqn{f^{-1}(z) = \texttt{lower} + \exp(z)}}
+#'   \item{map_jacobian(x, lower)}{First derivative of the forward map: \deqn{f'(x) = 1/(x - \texttt{lower})}}
+#'   \item{map_hessian(x, lower)}{Second derivative of the forward map: \deqn{f''(x) = -1/(x - \texttt{lower})^2}}
+#'   \item{invert_jacobian(x, lower)}{First derivative of the inverse map: \deqn{(f^{-1})'(z) = \exp(z)}}
+#'   \item{invert_hessian(x, lower)}{Second derivative of the inverse map: \deqn{(f^{-1})''(z) = \exp(z)}}
 #' }
 #'
 #' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
@@ -248,12 +248,12 @@ map_positive <- function() {
 #' @details
 #' The returned list contains:
 #' \describe{
-#'   \item{map(x, upper)}{Maps from (-Inf, upper) to the real line: \eqn{f(x) = \log(\texttt{upper} - x)}}
-#'   \item{invert(x, upper)}{Inverse mapping: \eqn{f^{-1}(z) = \texttt{upper} - \exp(z)}}
-#'   \item{map_jacobian(x, upper)}{First derivative of the forward map: \eqn{f'(x) = -1/(\texttt{upper} - x)}}
-#'   \item{map_hessian(x, upper)}{Second derivative of the forward map: \eqn{f''(x) = -1/(\texttt{upper} - x)^2}}
-#'   \item{invert_jacobian(x, upper)}{First derivative of the inverse map: \eqn{(f^{-1})'(z) = -\exp(z)}}
-#'   \item{invert_hessian(x, upper)}{Second derivative of the inverse map: \eqn{(f^{-1})''(z) = -\exp(z)}}
+#'   \item{map(x, upper)}{Maps from (-Inf, upper) to the real line: \deqn{f(x) = \log(\texttt{upper} - x)}}
+#'   \item{invert(x, upper)}{Inverse mapping: \deqn{f^{-1}(z) = \texttt{upper} - \exp(z)}}
+#'   \item{map_jacobian(x, upper)}{First derivative of the forward map: \deqn{f'(x) = -1/(\texttt{upper} - x)}}
+#'   \item{map_hessian(x, upper)}{Second derivative of the forward map: \deqn{f''(x) = -1/(\texttt{upper} - x)^2}}
+#'   \item{invert_jacobian(x, upper)}{First derivative of the inverse map: \deqn{(f^{-1})'(z) = -\exp(z)}}
+#'   \item{invert_hessian(x, upper)}{Second derivative of the inverse map: \deqn{(f^{-1})''(z) = -\exp(z)}}
 #' }
 #'
 #' @return A list of six functions: \code{map}, \code{invert}, \code{map_jacobian},
