@@ -180,7 +180,7 @@ gnlmsa <- function (y, X, Z, family,
   } else {
     fit <- sa
     nr_better <- FALSE
-    nr_failed <- TRUE
+    nr_failed <- FALSE
   }
 
   if (missing(beta_names)) {
