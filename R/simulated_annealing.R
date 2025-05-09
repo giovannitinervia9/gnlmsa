@@ -85,7 +85,7 @@ sa_control <- function(iterations = 1000,
 #' @param upper_phi Numeric vector defining upper bounds for the dispersion parameters.
 #' @param mult Multipliers for the proposal variance in the SA algorithm.
 #' @param nsim Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).
-#' @param sa_control A list of control parameters for the SA routine, as returned by [sa_control()].
+#' @param sa_control_params A list of control parameters for the SA routine, as returned by [sa_control()].
 #' @param expected Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.
 #' @param verbose Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.
 #'
@@ -93,7 +93,7 @@ sa_control <- function(iterations = 1000,
 #' The SA algorithm operates on a transformed parameter space: all constrained parameters are mapped
 #' to \eqn{\mathbb{R}} via bijective transformations to ensure feasibility.
 #'
-#' At intervals determined by `sa_control$compute_v`, the algorithm estimates a local variance-covariance
+#' At intervals determined by `sa_control_params$compute_v`, the algorithm estimates a local variance-covariance
 #' matrix from the (expected or observed) Hessian of the log-likelihood and uses it to adapt the proposal distribution.
 #'
 #' If no improvement is detected after a certain number of iterations (`restart_if_stuck`), the algorithm
@@ -186,7 +186,7 @@ sa_control <- function(iterations = 1000,
 #'                f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
 #'                beta_start = beta_start, lower_mu = lower_mu, upper_mu = upper_mu,
 #'                gamma_start = gamma_start, lower_phi = lower_phi, upper_phi = upper_phi,
-#'                mult = mult, nsim = nsim, sa_control = sa_control_list,
+#'                mult = mult, nsim = nsim, sa_control_params = sa_control_list,
 #'                expected = expected, verbose = verbose)
 #'
 #' fit1
@@ -202,7 +202,7 @@ sa_fit <- function (y, X, Z, family,
                     f_phi, J_phi, H_phi,
                     beta_start, lower_mu, upper_mu,
                     gamma_start, lower_phi, upper_phi,
-                    mult, nsim, sa_control = sa_control(),
+                    mult, nsim, sa_control_params = sa_control(),
                     expected = TRUE, verbose = TRUE) {
 
   if(length(lower_mu) != length(upper_mu)) stop("lower_mu and upper_mu must have the same length")
@@ -245,11 +245,11 @@ sa_fit <- function (y, X, Z, family,
   npar <- npar_mu + npar_phi
 
 
-  sa_iterations <- sa_control$iterations
-  sa_compute_v <- sa_control$compute_v
+  sa_iterations <- sa_control_params$iterations
+  sa_compute_v <- sa_control_params$compute_v
   iter_compute_v <- which(seq_len(sa_iterations) %% sa_compute_v == 0)
-  restart_if_stuck <- sa_control$restart_if_stuck
-  save_history <- sa_control$save_history
+  restart_if_stuck <- sa_control_params$restart_if_stuck
+  save_history <- sa_control_params$save_history
 
 
   par0_con <- c(beta_start, gamma_start)
@@ -273,8 +273,8 @@ sa_fit <- function (y, X, Z, family,
   l_best <- l0
   par_best <- par0_con
 
-  initial_temperature <- sa_control$initial_temperature
-  final_temperature <- sa_control$final_temperature
+  initial_temperature <- sa_control_params$initial_temperature
+  final_temperature <- sa_control_params$final_temperature
   const_temp <- log(initial_temperature/final_temperature)/sa_iterations
   temp <- initial_temperature*exp(-const_temp*0)
 
@@ -390,7 +390,7 @@ sa_fit <- function (y, X, Z, family,
               phi = phi_best,
               iterations = sa_iterations,
               history = NULL,
-              control = sa_control)
+              control = sa_control_params)
 
   if (save_history) {
     out$history <- loglik_history

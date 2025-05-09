@@ -6,24 +6,14 @@
 \usage{
 gnlmsa(
   y,
-  X,
-  Z,
-  family,
-  f_mu,
-  J_mu,
-  H_mu,
-  f_phi,
-  J_phi,
-  H_phi,
+  mean_model,
   beta_start,
-  lower_mu,
-  upper_mu,
+  family = gnlmsa_gaussian(),
+  dispersion_model = NULL,
   gamma_start,
-  lower_phi,
-  upper_phi,
-  mult,
-  nsim,
-  sa_control = sa_control(),
+  mult = 1,
+  nsim = 1,
+  sa_control_params = sa_control(),
   maxit = 100,
   tol = 1e-05,
   expected = TRUE,
@@ -35,47 +25,46 @@ gnlmsa(
 \arguments{
 \item{y}{Numeric vector of response values.}
 
-\item{X}{Design matrix for the mean component.}
-
-\item{Z}{Design matrix for the dispersion component.}
-
-\item{family}{A \code{\link{family_gnlmsa}} object specifying distributional assumptions and required derivatives.}
-
-\item{f_mu}{Function for the mean component nonlinear predictor.}
-
-\item{J_mu}{(Optional) Jacobian of \code{f_mu}.}
-
-\item{H_mu}{(Optional) Hessian of \code{f_mu}.}
-
-\item{f_phi}{Function for the dispersion component nonlinear predictor.}
-
-\item{J_phi}{(Optional) Jacobian of \code{f_phi}.}
-
-\item{H_phi}{(Optional) Hessian of \code{f_phi}.}
+\item{mean_model}{A list that includes the nonlinear predictor function, Jacobian, Hessian, lower and upper bounds,
+and design matrix for the mean component. The list should have the following components:
+\itemize{
+\item \code{f}: Function for the mean component nonlinear predictor.
+\item \code{J}: Jacobian of the f function.
+\item \code{H}: Hessian of the f function.
+\item \code{lower}: Lower bounds for the mean component parameters.
+\item \code{upper}: Upper bounds for the mean component parameters.
+\item \code{X}: Design matrix for the mean component.
+}}
 
 \item{beta_start}{Initial values for the parameters of the mean component.}
 
-\item{lower_mu}{Numeric vector defining lower bounds for the mean parameters.}
+\item{family}{A family_gnlmsa object specifying the distributional assumptions and required derivatives.}
 
-\item{upper_mu}{Numeric vector defining upper bounds for the mean parameters.}
+\item{dispersion_model}{(Optional) A list that includes the nonlinear predictor function, Jacobian, Hessian,
+lower and upper bounds, and design matrix for the dispersion component. The list should have the
+following components:
+\itemize{
+\item \code{f}: Function for the dispersion component nonlinear predictor.
+\item \code{J}: Jacobian of the f function.
+\item \code{H}: Hessian of the f function.
+\item \code{lower}: Lower bounds for the dispersion component parameters.
+\item \code{upper}: Upper bounds for the dispersion component parameters.
+\item \code{X}: Design matrix for the dispersion component.
+}}
 
 \item{gamma_start}{Initial values for the parameters of the dispersion component.}
 
-\item{lower_phi}{Numeric vector defining lower bounds for the dispersion parameters.}
-
-\item{upper_phi}{Numeric vector defining upper bounds for the dispersion parameters.}
-
 \item{mult}{Proposal scaling factor for the Simulated Annealing algorithm.}
 
-\item{nsim}{Number of independent Simulated Annealing simulations (currently only \code{1} is supported).}
+\item{nsim}{Number of independent Simulated Annealing simulations (currently only 1 is supported).}
 
-\item{sa_control}{A list of Simulated Annealing options created via \code{\link[=sa_control]{sa_control()}}.}
+\item{sa_control_params}{A list of Simulated Annealing options created via \code{\link[=sa_control]{sa_control()}}.}
 
-\item{maxit}{Maximum number of Newton–Raphson iterations.}
+\item{maxit}{Maximum number of Newton-Raphson iterations.}
 
-\item{tol}{Tolerance for convergence in Newton–Raphson.}
+\item{tol}{Tolerance for convergence in Newton-Raphson.}
 
-\item{expected}{Logical; use the expected (\code{TRUE}) or the observed (\code{FALSE}) Hessian.}
+\item{expected}{Logical; use the expected (TRUE) or observed (FALSE) Hessian.}
 
 \item{verbose}{Logical; print progress during Simulated Annealing.}
 
@@ -119,37 +108,17 @@ component, each of which can be specified using user-defined nonlinear predictor
 \examples{
 \dontrun{
 y <- productivity$Y
-X <- as.matrix(productivity[, -1])
-Z <- cbind(1, prcomp(scale(X))$x[, 1])
-family <- gnlmsa_Gamma("identity")
-f_mu <- cobb_douglas()$f
-J_mu <- cobb_douglas()$J
-H_mu <- cobb_douglas()$H
-f_phi <- Linear()$f
-J_phi <- Linear()$J
-H_phi <- Linear()$H
-beta_start <- c(10, .5, .5)
-lower_mu <- rep(0, 3)
-upper_mu <- rep(Inf, 3)
-gamma_start <- c(log(var(y)), 0)
-lower_phi <- rep(-Inf, 2)
-upper_phi <- rep(Inf, 2)
-mult <- 1
-nsim <- 1
-sa_control <- sa_control(10000)
-maxit <- 100
-tol <- 1e-05
-expected <- TRUE
-verbose <- TRUE
-beta_names <- c("a", "alpha", "beta")
-gnlmsa(y, X, Z, family,
-       f_mu, J_mu, H_mu,
-       f_phi, J_phi, H_phi,
-       beta_start, lower_mu, upper_mu,
-       gamma_start, lower_phi, upper_phi,
-       mult, nsim, sa_control = sa_control(),
-       maxit = 100, tol = 1e-05,
-       expected = TRUE, verbose = TRUE,
-       beta_names)
+mean_model <- list(
+  f = cobb_douglas()$f,
+  J = cobb_douglas()$J,
+  H = cobb_douglas()$H,
+  X = as.matrix(productivity[,-1]),
+  lower_mu = rep(0, 3),
+  upper_mu = rep(Inf, 3)
+)
+beta_start <- c(5, .5, .5)
+#'
+fit <- gnlmsa(y, mean_model, beta_start, family = gnlmsa_Gamma("identity"),
+              sa_control_params = sa_control(10000))
 }
 }
