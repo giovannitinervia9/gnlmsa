@@ -4,10 +4,19 @@
 \alias{Exp}
 \title{Create an Exponential Function and its Derivatives}
 \usage{
-Exp()
+Exp(X, intercept = TRUE, lower, upper)
+}
+\arguments{
+\item{X}{A matrix or data frame of covariates (input data). Each row represents an observation and each column represents a covariate.}
+
+\item{intercept}{A logical indicating whether to include an intercept term (default is TRUE).}
+
+\item{lower}{A vector of lower bounds for the coefficients. If not specified, defaults to \code{-Inf} for all coefficients.}
+
+\item{upper}{A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for all coefficients.}
 }
 \value{
-A list containing three functions:
+A list containing three functions and additional information:
 \item{f}{The exponential function. Takes parameters:
 \itemize{
 \item \code{X}: A matrix or data frame of covariates
@@ -29,6 +38,9 @@ A list containing three functions:
 }
 Returns a list of Hessian matrices, one for each observation in \code{X}
 }
+\item{lower}{A vector of lower bounds for the coefficients (if specified).}
+\item{upper}{A vector of upper bounds for the coefficients (if specified).}
+\item{X}{The input matrix or data frame of covariates.}
 }
 \description{
 This function creates an exponential function and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
@@ -54,7 +66,7 @@ Where:
 \item \eqn{x_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
 }
 
-The Hessian matrix for the generic \eqn{i}-th observation has the sctructure:
+The Hessian matrix for the generic \eqn{i}-th observation has the structure:
 \deqn{H_{jl} = H_{lj} = \dfrac{\partial^2y_i}{\partial \theta_j \partial \theta_l} = y_i x_{ij} x_{il}}
 
 Where:
@@ -62,29 +74,6 @@ Where:
 \item \eqn{y_i} is the output from the exponential function for the \eqn{i}-th observation
 \item \eqn{x_{ij}} and \eqn{x_{il}} are values of covariates \eqn{j} and \eqn{l} for the \eqn{i}-th observation
 }
-}
-\examples{
-# Create the exponential function
-exp_func <- Exp()
 
-# Define covariate data
-X <- matrix(c(1, 0.5, 0.2,
-              1, 0.8, 0.3,
-              1, 0.6, 0.4), ncol = 3, byrow = TRUE)
-
-# Define coefficients
-theta <- c(0.1, 0.5, -0.3)
-
-# Calculate exponential values
-y_values <- exp_func$f(X, theta)
-y_values
-
-# Calculate Jacobian (first derivatives)
-jacobian <- exp_func$J(X, theta)
-jacobian
-
-# Calculate Hessian matrices (second derivatives)
-hessian_list <- exp_func$H(X, theta)
-hessian_list[[1]]  # Hessian matrix for the first observation
-
+Additionally, the function allows the inclusion of an intercept term and constraints on the coefficients (lower and upper bounds).
 }

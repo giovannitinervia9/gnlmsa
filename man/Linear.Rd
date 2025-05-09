@@ -4,10 +4,19 @@
 \alias{Linear}
 \title{Create a Linear Function and its Derivatives}
 \usage{
-Linear()
+Linear(X, intercept = T, lower, upper)
+}
+\arguments{
+\item{X}{A matrix or data frame of covariates (input data). Each row represents an observation and each column represents a covariate.}
+
+\item{intercept}{A logical indicating whether to include an intercept term (default is TRUE).}
+
+\item{lower}{A vector of lower bounds for the coefficients. If not specified, defaults to \code{-Inf} for all coefficients.}
+
+\item{upper}{A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for all coefficients.}
 }
 \value{
-A list containing three functions:
+A list containing three functions and additional information:
 \item{f}{The linear function. Takes parameters:
 \itemize{
 \item \code{X}: A matrix or data frame of covariates
@@ -29,6 +38,9 @@ A list containing three functions:
 }
 Returns a list of Hessian matrices, one for each observation in \code{X}
 }
+\item{lower}{A vector of lower bounds for the coefficients (if specified).}
+\item{upper}{A vector of upper bounds for the coefficients (if specified).}
+\item{X}{The input matrix or data frame of covariates.}
 }
 \description{
 This function creates a linear function and its derivatives (Jacobian and Hessian) for use in optimization, modeling, and statistical analysis.
@@ -54,29 +66,6 @@ Where:
 }
 
 The Hessian (second derivatives) is a zero matrix of dimension \eqn{k \times k} where \eqn{k} is the number of columns of \eqn{X}.
-}
-\examples{
-# Create the exponential function
-lin_func <- Linear()
 
-# Define covariate data
-X <- matrix(c(1, 0.5, 0.2,
-              1, 0.8, 0.3,
-              1, 0.6, 0.4), ncol = 3, byrow = TRUE)
-
-# Define coefficients
-theta <- c(0.1, 0.5, -0.3)
-
-# Calculate linear combinations
-y_values <- lin_func$f(X, theta)
-y_values
-
-# Calculate Jacobian (first derivatives)
-jacobian <- lin_func$J(X, theta)
-jacobian
-
-# Calculate Hessian matrices (second derivatives)
-hessian_list <- lin_func$H(X, theta)
-hessian_list[[1]]  # Hessian matrix for the first observation
-
+Additionally, the function allows the inclusion of an intercept term and constraints on the coefficients (lower and upper bounds).
 }

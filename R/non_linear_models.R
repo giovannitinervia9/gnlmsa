@@ -31,7 +31,14 @@
 #'
 #' The Hessian (second derivatives) is a zero matrix of dimension \eqn{k \times k} where \eqn{k} is the number of columns of \eqn{X}.
 #'
-#' @return A list containing three functions:
+#' Additionally, the function allows the inclusion of an intercept term and constraints on the coefficients (lower and upper bounds).
+#'
+#' @param X A matrix or data frame of covariates (input data). Each row represents an observation and each column represents a covariate.
+#' @param intercept A logical indicating whether to include an intercept term (default is TRUE).
+#' @param lower A vector of lower bounds for the coefficients. If not specified, defaults to \code{-Inf} for all coefficients.
+#' @param upper A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for all coefficients.
+#'
+#' @return A list containing three functions and additional information:
 #'   \item{f}{The linear function. Takes parameters:
 #'     \itemize{
 #'       \item \code{X}: A matrix or data frame of covariates
@@ -53,34 +60,12 @@
 #'     }
 #'     Returns a list of Hessian matrices, one for each observation in \code{X}
 #'   }
-#'
-#'
-#' @examples
-#' # Create the exponential function
-#' lin_func <- Linear()
-#'
-#' # Define covariate data
-#' X <- matrix(c(1, 0.5, 0.2,
-#'               1, 0.8, 0.3,
-#'               1, 0.6, 0.4), ncol = 3, byrow = TRUE)
-#'
-#' # Define coefficients
-#' theta <- c(0.1, 0.5, -0.3)
-#'
-#' # Calculate linear combinations
-#' y_values <- lin_func$f(X, theta)
-#' y_values
-#'
-#' # Calculate Jacobian (first derivatives)
-#' jacobian <- lin_func$J(X, theta)
-#' jacobian
-#'
-#' # Calculate Hessian matrices (second derivatives)
-#' hessian_list <- lin_func$H(X, theta)
-#' hessian_list[[1]]  # Hessian matrix for the first observation
+#'   \item{lower}{A vector of lower bounds for the coefficients (if specified).}
+#'   \item{upper}{A vector of upper bounds for the coefficients (if specified).}
+#'   \item{X}{The input matrix or data frame of covariates.}
 #'
 #' @export
-Linear <- function(){
+Linear <- function(X, intercept = T, lower, upper){
   f <- function(X, theta) drop(as.matrix(X)%*%theta)
 
   J <- function(X, theta){
@@ -93,7 +78,18 @@ Linear <- function(){
     rep(list(hi), NROW(X))
   }
 
-  list(f = f, J = J, H = H)
+  if (missing(X)) {
+    return(list(f = f, J = J, H = H))
+  }
+
+  if (intercept) {
+    if(!all(X[, 1] == 1)) X <- cbind(1, X)
+  }
+
+  if (missing(lower)) lower <- rep(-Inf, ncol(X))
+  if (missing(upper)) upper <- rep(Inf, ncol(X))
+
+  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
 
 }
 
@@ -128,7 +124,7 @@ Linear <- function(){
 #'   \item \eqn{x_{ij}} is the value of covariate \eqn{j} for observation \eqn{i}
 #' }
 #'
-#' The Hessian matrix for the generic \eqn{i}-th observation has the sctructure:
+#' The Hessian matrix for the generic \eqn{i}-th observation has the structure:
 #' \deqn{H_{jl} = H_{lj} = \dfrac{\partial^2y_i}{\partial \theta_j \partial \theta_l} = y_i x_{ij} x_{il}}
 #'
 #' Where:
@@ -137,7 +133,14 @@ Linear <- function(){
 #'   \item \eqn{x_{ij}} and \eqn{x_{il}} are values of covariates \eqn{j} and \eqn{l} for the \eqn{i}-th observation
 #' }
 #'
-#' @return A list containing three functions:
+#' Additionally, the function allows the inclusion of an intercept term and constraints on the coefficients (lower and upper bounds).
+#'
+#' @param X A matrix or data frame of covariates (input data). Each row represents an observation and each column represents a covariate.
+#' @param intercept A logical indicating whether to include an intercept term (default is TRUE).
+#' @param lower A vector of lower bounds for the coefficients. If not specified, defaults to \code{-Inf} for all coefficients.
+#' @param upper A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for all coefficients.
+#'
+#' @return A list containing three functions and additional information:
 #'   \item{f}{The exponential function. Takes parameters:
 #'     \itemize{
 #'       \item \code{X}: A matrix or data frame of covariates
@@ -159,34 +162,12 @@ Linear <- function(){
 #'     }
 #'     Returns a list of Hessian matrices, one for each observation in \code{X}
 #'   }
-#'
-#'
-#' @examples
-#' # Create the exponential function
-#' exp_func <- Exp()
-#'
-#' # Define covariate data
-#' X <- matrix(c(1, 0.5, 0.2,
-#'               1, 0.8, 0.3,
-#'               1, 0.6, 0.4), ncol = 3, byrow = TRUE)
-#'
-#' # Define coefficients
-#' theta <- c(0.1, 0.5, -0.3)
-#'
-#' # Calculate exponential values
-#' y_values <- exp_func$f(X, theta)
-#' y_values
-#'
-#' # Calculate Jacobian (first derivatives)
-#' jacobian <- exp_func$J(X, theta)
-#' jacobian
-#'
-#' # Calculate Hessian matrices (second derivatives)
-#' hessian_list <- exp_func$H(X, theta)
-#' hessian_list[[1]]  # Hessian matrix for the first observation
+#'   \item{lower}{A vector of lower bounds for the coefficients (if specified).}
+#'   \item{upper}{A vector of upper bounds for the coefficients (if specified).}
+#'   \item{X}{The input matrix or data frame of covariates.}
 #'
 #' @export
-Exp <- function() {
+Exp <- function(X, intercept = TRUE, lower, upper) {
   f <- function(X, theta) {
     drop(exp(as.matrix(X) %*% theta))
   }
@@ -221,7 +202,18 @@ Exp <- function() {
     H_list
   }
 
-  list(f = f, J = J, H = H)
+  if (missing(X)) {
+    return(list(f = f, J = J, H = H))
+  }
+
+  if (intercept) {
+    if(!all(X[, 1] == 1)) X <- cbind(1, X)
+  }
+
+  if (missing(lower)) lower <- rep(-Inf, ncol(X))
+  if (missing(upper)) upper <- rep(Inf, ncol(X))
+
+  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
 }
 
 
@@ -244,7 +236,7 @@ Exp <- function() {
 #' Where:
 #' \itemize{
 #'   \item \eqn{x_i^{\intercal}} is the \eqn{i}-th row vector of the matrix of input factors \eqn{X}, with each row representing an observation
-#'         and each column representing a input factor
+#'         and each column representing an input factor
 #'   \item \eqn{k} is the number of input factors
 #'   \item \eqn{\theta_0} is a scale parameter (efficiency parameter)
 #'   \item \eqn{\theta_{j}} are the elasticity parameters for each input factor
@@ -267,7 +259,13 @@ Exp <- function() {
 #' \deqn{H_{1j} = H_{j,1} = \dfrac{\partial ^2y_i}{\partial \theta_0 \partial \theta_j} = \dfrac{y_i}{\theta_0} \log(x_{ij}) \text{ for } j = 1, \ldots, k}
 #' \deqn{H_{jl} = H_{l,j} = \dfrac{\partial ^2 y_i}{\partial \theta_j \partial \theta_l} = y_i \log(x_{ij}) \log(x_{il}) \text{ for } j,l = 1, \ldots, k}
 #'
-#' @return A list containing three functions:
+#' Additionally, the function allows the inclusion of constraints on the coefficients (lower and upper bounds).
+#'
+#' @param X A matrix or data frame of input factors (input data). Each row represents an observation and each column represents an input factor.
+#' @param lower A vector of lower bounds for the coefficients. If not specified, defaults to \code{0} for the parameters.
+#' @param upper A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for the parameters.
+#'
+#' @return A list containing three functions and additional information:
 #'   \item{f}{The Cobb-Douglas production function. Takes parameters:
 #'     \itemize{
 #'       \item \code{X}: A matrix or data frame of input factors
@@ -290,32 +288,11 @@ Exp <- function() {
 #'     }
 #'     Returns a list of Hessian matrices, one for each observation in \code{X}
 #'   }
-#'
-#' @examples
-#' # Create the Cobb-Douglas function
-#' cd <- cobb_douglas()
-#'
-#' # Define input data (labor and capital)
-#' X <- data.frame(labor = c(10, 20, 15), capital = c(50, 40, 60))
-#'
-#' # Define parameters: efficiency and elasticities
-#' # theta[1] = efficiency, theta[2] = labor elasticity, theta[3] = capital elasticity
-#' theta <- c(2, 0.6, 0.4)  # Constant returns to scale as 0.6 + 0.4 = 1
-#'
-#' # Calculate production output
-#' output <- cd$f(X, theta)
-#' output
-#'
-#' # Calculate Jacobian (first derivatives)
-#' jacobian <- cd$J(X, theta)
-#' jacobian
-#'
-#' # Calculate Hessian matrices (second derivatives)
-#' hessian_list <- cd$H(X, theta)
-#' hessian_list[[1]]  # Hessian matrix for the first observation
-#'
+#'   \item{lower}{A vector of lower bounds for the coefficients (if specified).}
+#'   \item{upper}{A vector of upper bounds for the coefficients (if specified).}
+#'   \item{X}{The input matrix or data frame of input factors.}#'
 #' @export
-cobb_douglas <- function() {
+cobb_douglas <- function(X, lower, upper) {
 
   f <- function(X, theta) {
     drop(theta[1] * exp(log(as.matrix(X)) %*% theta[-1]))
@@ -360,9 +337,14 @@ cobb_douglas <- function() {
     H_list
   }
 
-  list(f = f, J = J, H = H)
-}
+  if (missing(X)) {
+    return(list(f = f, J = J, H = H))
+  }
 
+  if (missing(lower)) lower <- rep(0, ncol(X) + 1)
+  if (missing(upper)) upper <- rep(Inf, ncol(X) + 1)
+  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
+}
 
 
 #-------------------------------------------------------------------------------

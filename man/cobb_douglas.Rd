@@ -4,10 +4,17 @@
 \alias{cobb_douglas}
 \title{Create a Cobb-Douglas Production Function and its Derivatives}
 \usage{
-cobb_douglas()
+cobb_douglas(X, lower, upper)
+}
+\arguments{
+\item{X}{A matrix or data frame of input factors (input data). Each row represents an observation and each column represents an input factor.}
+
+\item{lower}{A vector of lower bounds for the coefficients. If not specified, defaults to \code{0} for the parameters.}
+
+\item{upper}{A vector of upper bounds for the coefficients. If not specified, defaults to \code{Inf} for the parameters.}
 }
 \value{
-A list containing three functions:
+A list containing three functions and additional information:
 \item{f}{The Cobb-Douglas production function. Takes parameters:
 \itemize{
 \item \code{X}: A matrix or data frame of input factors
@@ -30,6 +37,9 @@ A list containing three functions:
 }
 Returns a list of Hessian matrices, one for each observation in \code{X}
 }
+\item{lower}{A vector of lower bounds for the coefficients (if specified).}
+\item{upper}{A vector of upper bounds for the coefficients (if specified).}
+\item{X}{The input matrix or data frame of input factors.}#'
 }
 \description{
 This function creates a Cobb-Douglas production function and its derivatives
@@ -44,7 +54,7 @@ The Cobb-Douglas production function has the following general form:
 Where:
 \itemize{
 \item \eqn{x_i^{\intercal}} is the \eqn{i}-th row vector of the matrix of input factors \eqn{X}, with each row representing an observation
-and each column representing a input factor
+and each column representing an input factor
 \item \eqn{k} is the number of input factors
 \item \eqn{\theta_0} is a scale parameter (efficiency parameter)
 \item \eqn{\theta_{j}} are the elasticity parameters for each input factor
@@ -66,28 +76,6 @@ The Hessian (second derivatives) matrix for the \eqn{i}-th observation has the f
 \deqn{H_{11} = \dfrac{\partial^2 y_i}{\partial ^2 \theta_0} = 0}
 \deqn{H_{1j} = H_{j,1} = \dfrac{\partial ^2y_i}{\partial \theta_0 \partial \theta_j} = \dfrac{y_i}{\theta_0} \log(x_{ij}) \text{ for } j = 1, \ldots, k}
 \deqn{H_{jl} = H_{l,j} = \dfrac{\partial ^2 y_i}{\partial \theta_j \partial \theta_l} = y_i \log(x_{ij}) \log(x_{il}) \text{ for } j,l = 1, \ldots, k}
-}
-\examples{
-# Create the Cobb-Douglas function
-cd <- cobb_douglas()
 
-# Define input data (labor and capital)
-X <- data.frame(labor = c(10, 20, 15), capital = c(50, 40, 60))
-
-# Define parameters: efficiency and elasticities
-# theta[1] = efficiency, theta[2] = labor elasticity, theta[3] = capital elasticity
-theta <- c(2, 0.6, 0.4)  # Constant returns to scale as 0.6 + 0.4 = 1
-
-# Calculate production output
-output <- cd$f(X, theta)
-output
-
-# Calculate Jacobian (first derivatives)
-jacobian <- cd$J(X, theta)
-jacobian
-
-# Calculate Hessian matrices (second derivatives)
-hessian_list <- cd$H(X, theta)
-hessian_list[[1]]  # Hessian matrix for the first observation
-
+Additionally, the function allows the inclusion of constraints on the coefficients (lower and upper bounds).
 }

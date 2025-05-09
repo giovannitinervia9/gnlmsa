@@ -62,22 +62,14 @@
 #'   \item{X, Z, y}{Original data matrices and response vector.}
 #' }
 #' @export
-#'
+#' @importFrom stats var
 #' @examples
 #' \dontrun{
 #' y <- productivity$Y
-#' mean_model <- list(
-#'   f = cobb_douglas()$f,
-#'   J = cobb_douglas()$J,
-#'   H = cobb_douglas()$H,
-#'   X = as.matrix(productivity[,-1]),
-#'   lower_mu = rep(0, 3),
-#'   upper_mu = rep(Inf, 3)
-#' )
+#' X <- productivity[, -1]
 #' beta_start <- c(5, .5, .5)
-#' #'
-#' fit <- gnlmsa(y, mean_model, beta_start, family = gnlmsa_Gamma("identity"),
-#'               sa_control_params = sa_control(10000))
+#' fit <- gnlmsa(y, mean_model = cobb_douglas(X = X), beta_start, family = gnlmsa_Gamma("identity"),
+#'               sa_control_params = sa_control(1000))
 #' }
 gnlmsa <- function (y, mean_model, beta_start,
                      family = gnlmsa_gaussian(), dispersion_model = NULL, gamma_start,
