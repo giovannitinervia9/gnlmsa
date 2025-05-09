@@ -79,17 +79,19 @@ Linear <- function(X, intercept = T, lower, upper){
   }
 
   if (missing(X)) {
-    return(list(f = f, J = J, H = H))
+    list(f = f, J = J, H = H)
+  } else {
+    if (intercept) {
+      if(!all(as.matrix(X)[, 1] == 1)) X <- cbind(1, X)
+    }
+
+    if (missing(lower)) lower <- rep(-Inf, ncol(X))
+    if (missing(upper)) upper <- rep(Inf, ncol(X))
+
+    list(f = f, J = J, H = H, lower = lower, upper = upper, X = as.matrix(X))
+
   }
 
-  if (intercept) {
-    if(!all(X[, 1] == 1)) X <- cbind(1, X)
-  }
-
-  if (missing(lower)) lower <- rep(-Inf, ncol(X))
-  if (missing(upper)) upper <- rep(Inf, ncol(X))
-
-  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
 
 }
 
@@ -203,17 +205,21 @@ Exp <- function(X, intercept = TRUE, lower, upper) {
   }
 
   if (missing(X)) {
-    return(list(f = f, J = J, H = H))
+    list(f = f, J = J, H = H)
+  } else {
+
+    if (intercept) {
+      if(!all(as.matrix(X)[, 1] == 1)) X <- cbind(1, X)
+    }
+
+    if (missing(lower)) lower <- rep(-Inf, ncol(X))
+    if (missing(upper)) upper <- rep(Inf, ncol(X))
+
+    list(f = f, J = J, H = H, lower = lower, upper = upper, X = as.matrix(X))
+
   }
 
-  if (intercept) {
-    if(!all(X[, 1] == 1)) X <- cbind(1, X)
-  }
 
-  if (missing(lower)) lower <- rep(-Inf, ncol(X))
-  if (missing(upper)) upper <- rep(Inf, ncol(X))
-
-  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
 }
 
 
@@ -338,12 +344,15 @@ cobb_douglas <- function(X, lower, upper) {
   }
 
   if (missing(X)) {
-    return(list(f = f, J = J, H = H))
+    list(f = f, J = J, H = H)
+  } else {
+    X <- as.matrix(X)
+    if (missing(lower)) lower <- rep(0, ncol(X) + 1)
+    if (missing(upper)) upper <- rep(Inf, ncol(X) + 1)
+    list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
   }
 
-  if (missing(lower)) lower <- rep(0, ncol(X) + 1)
-  if (missing(upper)) upper <- rep(Inf, ncol(X) + 1)
-  list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
+
 }
 
 
