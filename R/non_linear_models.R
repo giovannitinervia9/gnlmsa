@@ -356,7 +356,115 @@ cobb_douglas <- function(X, lower, upper) {
 }
 
 
+
 #-------------------------------------------------------------------------------
+
+
+#' Create a Logistic Function and its Derivatives
+#'
+#' This function creates a logistic function and its derivatives (Jacobian and Hessian)
+#' for use in optimization, modeling, and statistical analysis, particularly as a functional
+#' predictor in generalized non-linear models (GNLM).
+#'
+#' @details
+#' The logistic function implemented here has the following form:
+#' \deqn{f(x_i, \theta) = \dfrac{\theta_1}{1 + \exp(-\theta_2(x_i - \theta_3)))}}
+#'
+#' Where:
+#' \itemize{
+#'   \item \eqn{x_i} is the \eqn{i}-th observation of input data \eqn{X}.
+#'   \item \eqn{\theta_1} is the scaling parameter of the logistic function.
+#'   \item \eqn{\theta_2} is the slope (rate of growth or decay).
+#'   \item \eqn{\theta_3} is the threshold value where the logistic function is centered.
+#'   \item The function returns a vector of logistic function values for each observation in \eqn{X}.
+#' }
+#'
+#'
+#' Additionally, the function allows the inclusion of bounds for the optimization parameters
+#' (lower and upper bounds) and is designed to be used in optimization-based tasks like
+#' non-linear regression or GLM fitting.
+#'
+#' @param X A matrix or data frame of covariates (input data). Each row represents an
+#'          observation, and each column represents a covariate.
+#' @param lower A vector of lower bounds for the coefficients. If not specified, defaults
+#'              to \code{-Inf} for all coefficients.
+#' @param upper A vector of upper bounds for the coefficients. If not specified, defaults
+#'              to \code{Inf} for all coefficients.
+#'
+#' @return A list containing three functions and additional information:
+#'   \item{f}{The logistic function. Takes parameters:
+#'     \itemize{
+#'       \item \code{X}: A matrix or data frame of covariates.
+#'       \item \code{theta}: A vector of coefficients.
+#'     }
+#'   }
+#'   \item{J}{The Jacobian (first derivatives) function. Takes parameters:
+#'     \itemize{
+#'       \item \code{X}: A matrix or data frame of covariates.
+#'       \item \code{theta}: A vector of coefficients.
+#'     }
+#'   }
+#'   \item{H}{The Hessian (second derivatives) function. Takes parameters:
+#'     \itemize{
+#'       \item \code{X}: A matrix or data frame of covariates.
+#'       \item \code{theta}: A vector of coefficients.
+#'     }
+#'     Returns a list of Hessian matrices, one for each observation in \code{X}.
+#'   }
+#'   \item{lower}{A vector of lower bounds for the coefficients.}
+#'   \item{upper}{A vector of upper bounds for the coefficients.}
+#'   \item{X}{The input matrix or data frame of covariates.}
+#'
+#' @export
+Logistic <- function(X, lower, upper){
+
+  f <- function(X, theta){
+    drop(theta[1]/(1 + exp(-theta[2]*(X - theta[3]))))
+  }
+
+  J <- function(X, theta){
+    cbind(
+      1/(1 + exp(-theta[2]*(X - theta[3]))),
+      theta[2]*(theta[3] - X)*exp(-theta[2]*(X - theta[3]))/((1 + exp(-theta[2]*(X - theta[3]))))^2,
+      (theta[1]*theta[2]*exp(-theta[2]*(X - theta[3])))/((1 + exp(-theta[2]*(X - theta[3]))))^2
+    )
+  }
+
+  H <- function(X, theta) {
+    X <- as.matrix(X)
+    n <- nrow(X)
+    h <- matrix(0, 3, 3)
+    H_list <- vector("list", n)
+    for(i in 1:n){
+      x <- X[i, ]
+
+      h11 <- 0
+      h12 <- -(theta[3] - x)*exp(-theta[2]*(x - theta[3]))/(1 + exp(-theta[2]*(x - theta[3])))^2
+      h13 <- -theta[2]*exp(-theta[2]*(x - theta[3]))/(1 + exp(-theta[2]*(x - theta[3])))^2
+      h22 <- theta[1]*(theta[3] - x)^2*exp(theta[2]*(x + theta[3]))*(exp(theta[2]*theta[3]) - exp(theta[2]*x))/(exp(theta[2]*theta[3]) + exp(theta[2]*x))^3
+      h23 <- -theta[1]*exp(theta[2]*(x-theta[3]))*(exp(theta[2]*(x - theta[3]))*(theta[2]*(theta[3] - x) + 1) + theta[2]*(x - theta[3]) + 1)/(1 + exp(theta[2]*(x - theta[3])))^3
+      h33 <- theta[1]*theta[2]^2*exp(theta[2]*x + theta[3])*(exp(theta[2]*theta[3]) - exp(theta[2]*x))/(exp(theta[2]*theta[3]) + exp(theta[2]*x))^3
+
+      H_list[[i]] <- matrix(c(h11, h12, h13,
+                              h12, h22, h23,
+                              h13, h23, h33), 3, 3)
+
+    }
+    H_list
+
+  }
+
+
+  if (missing(X)) {
+    list(f = f, J = J, H = H)
+  } else {
+    X <- as.matrix(X)
+    if (missing(lower)) lower <- rep(-Inf, 3)
+    if (missing(upper)) upper <- rep(Inf, 3)
+    list(f = f, J = J, H = H, lower = lower, upper = upper, X = X)
+  }
+
+}
 
 
 
