@@ -83,6 +83,9 @@ sa_control <- function(iterations = 1000,
 #' @param gamma_start Initial values for parameters of the dispersion component.
 #' @param lower_phi Numeric vector defining lower bounds for the dispersion parameters.
 #' @param upper_phi Numeric vector defining upper bounds for the dispersion parameters.
+#' @param fixed_params A list containing two numeric vectors of the same length:
+#'   - The first vector specifies the indices of the parameters to be fixed.
+#'   - The second vector provides the corresponding fixed values for those parameters.
 #' @param mult Multipliers for the proposal variance in the SA algorithm.
 #' @param nsim Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).
 #' @param sa_control_params A list of control parameters for the SA routine, as returned by [sa_control()].
@@ -202,6 +205,7 @@ sa_fit <- function (y, X, Z, family,
                     f_phi, J_phi, H_phi,
                     beta_start, lower_mu, upper_mu,
                     gamma_start, lower_phi, upper_phi,
+                    fixed_params = NULL,
                     mult, nsim, sa_control_params = sa_control(),
                     expected = TRUE, verbose = TRUE) {
 
@@ -212,6 +216,12 @@ sa_fit <- function (y, X, Z, family,
   if(missing(H_mu)) H_mu <- make_hessian(f_mu)
   if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
   if(missing(H_phi)) H_phi <- make_hessian(f_phi)
+
+  if (!is.null(fixed_params)) {
+    fixed <- TRUE
+    fixed_position <- fixed_params[[1]]
+    fixed_values <- fixed_params[[2]]
+  }
 
   X <- as.matrix(X)
   Z <- as.matrix(Z)
@@ -253,6 +263,11 @@ sa_fit <- function (y, X, Z, family,
 
 
   par0_con <- c(beta_start, gamma_start)
+  if (fixed) {
+    par0_con[fixed_position] <- fixed_values
+  }
+
+
   par0_unc <- map(par0_con)
   beta0 <- par0_con[1:npar_mu]
   gamma0 <- par0_con[(npar_mu + 1):npar]
@@ -317,6 +332,11 @@ sa_fit <- function (y, X, Z, family,
 
     par1_unc <- sample_par(par0_unc, v, mult, npar)
     par1_con <- invert(par1_unc)
+
+    if (fixed) {
+      par1_con[fixed_position] <- fixed_values
+    }
+
     beta1 <- par1_con[1:npar_mu]
     gamma1 <- par1_con[(npar_mu + 1):npar]
 

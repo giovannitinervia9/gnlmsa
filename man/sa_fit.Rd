@@ -21,6 +21,7 @@ sa_fit(
   gamma_start,
   lower_phi,
   upper_phi,
+  fixed_params = NULL,
   mult,
   nsim,
   sa_control_params = sa_control(),
@@ -60,6 +61,12 @@ sa_fit(
 \item{lower_phi}{Numeric vector defining lower bounds for the dispersion parameters.}
 
 \item{upper_phi}{Numeric vector defining upper bounds for the dispersion parameters.}
+
+\item{fixed_params}{A list containing two numeric vectors of the same length:
+\itemize{
+\item The first vector specifies the indices of the parameters to be fixed.
+\item The second vector provides the corresponding fixed values for those parameters.
+}}
 
 \item{mult}{Multipliers for the proposal variance in the SA algorithm.}
 
