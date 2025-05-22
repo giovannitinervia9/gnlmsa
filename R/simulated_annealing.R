@@ -14,10 +14,10 @@
 #' and tracking behavior during the annealing process.
 #'
 #' @param iterations Integer. Total number of iterations for the Simulated Annealing algorithm.
-#' @param compute_v Integer. Frequency (in iterations) at which the variance-covariance matrix used
-#'   for proposal generation is updated. Default is every 30% of total iterations.
 #' @param initial_temperature Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.
 #' @param final_temperature Numeric. Final value of the temperature at which the cooling schedule stops.
+#' @param compute_v Integer. Frequency (in iterations) at which the variance-covariance matrix used
+#'   for proposal generation is updated. Default is every 30% of total iterations.
 #' @param restart_if_stuck Integer. Number of consecutive iterations without improvement after which
 #'   the algorithm restarts from the last best parameter vector. Helps escape local optima.
 #' @param save_history Logical. If \code{TRUE}, the full parameter and log-likelihood trajectory is stored.
@@ -31,9 +31,9 @@
 #'
 #' @export
 sa_control <- function(iterations = 1000,
-                       compute_v = floor(iterations*0.3),
                        initial_temperature = 100,
                        final_temperature = 1,
+                       compute_v = floor(iterations*0.3),
                        restart_if_stuck = floor(iterations*0.3),
                        save_history = FALSE
 ) {
@@ -48,9 +48,9 @@ sa_control <- function(iterations = 1000,
   }
 
   list(iterations = iterations,
-       compute_v = compute_v,
        initial_temperature = initial_temperature,
        final_temperature = final_temperature,
+       compute_v = compute_v,
        restart_if_stuck = restart_if_stuck,
        save_history = save_history)
 }
@@ -221,6 +221,8 @@ sa_fit <- function (y, X, Z, family,
     fixed <- TRUE
     fixed_position <- fixed_params[[1]]
     fixed_values <- fixed_params[[2]]
+  } else {
+    fixed <- FALSE
   }
 
   X <- as.matrix(X)
