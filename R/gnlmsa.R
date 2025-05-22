@@ -162,6 +162,7 @@ gnlmsa <- function (y, mean_model, beta_start,
                f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
                beta_start = beta_start, lower_mu = lower_mu, upper_mu = upper_mu,
                gamma_start = gamma_start, lower_phi = lower_phi, upper_phi = upper_phi,
+               fixed_params = fixed_params,
                mult = mult, nsim = nsim, sa_control_params = sa_control_params,
                expected = expected, verbose = verbose)
 
