@@ -32,6 +32,8 @@ A list of class \code{family_gnlmsa} with the following components:
 
 \item{variance}{Function defining the conditional variance as a function of \eqn{\mu} and \eqn{\phi}.}
 \item{loglik}{Function that computes the log-likelihood contribution of each observation.}
+\item{grad_mu}{Gradient of the log-likelihood with respect to the mean parameters.}
+\item{hess_mu}{Hessian of the log-likelihood with respect to the mean parameters.}
 \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
 \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
 \item{hess_mu_phi}{Cross-partial derivative of the log-likelihood with respect to mean and dispersion parameters.}
