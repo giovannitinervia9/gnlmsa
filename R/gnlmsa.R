@@ -82,8 +82,6 @@ gnlmsa <- function (y, mean_model, beta_start,
                     expected = TRUE, verbose = TRUE,
                     beta_names, gamma_names) {
 
-
-
   nobs <- NROW(y)
 
   f_mu <- mean_model$f
@@ -128,29 +126,8 @@ gnlmsa <- function (y, mean_model, beta_start,
   if(is.null(J_phi)) J_phi <- make_jacobian(f_phi)
   if(is.null(H_phi)) H_phi <- make_hessian(f_phi)
 
-  linkfun_mu <- family$linkfun_mu
-  linkinv_mu <- family$linkinv_mu
-  mu.eta <- family$mu.eta
-  mu2.eta2 <- family$mu2.eta2
-
-  linkfun_phi <- family$linkfun_phi
-  linkinv_phi <- family$linkinv_phi
-  phi.vi <- family$phi.vi
-  phi2.vi2 <- family$phi2.vi2
-
-  variance <- family$variance
-
-  hess_phi <- family$hess_phi
-  hess_mu_phi <- family$hess_mu_phi
-  loglik <- family$loglik
-
   lower <- c(lower_mu, lower_phi)
   upper <- c(upper_mu, upper_phi)
-
-  map_functions <- make_map_function(lower, upper)
-  map <- map_functions$map
-  invert <- map_functions$invert
-  jacobian <- map_functions$map_jacobian
 
   npar_mu <- length(lower_mu)
   npar_phi <- length(lower_phi)

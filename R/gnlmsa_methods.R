@@ -105,6 +105,8 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
   phi2.vi2 <- family$phi2.vi2
   variance <- family$variance
 
+
+  hess_mu <- family$hess_mu
   hess_phi <- family$hess_phi
   hess_mu_phi <- family$hess_mu_phi
 

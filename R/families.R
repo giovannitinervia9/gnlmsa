@@ -121,6 +121,8 @@ print.family_gnlmsa <- function(x, ...){
 #'
 #'   \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \mu_i^2 / \phi_i}.}
 #'   \item{loglik}{Log-likelihood contribution function for each observation.}
+#'   \item{grad_mu}{Gradient of the log-likelihood with respect to the mean parameters.}
+#'   \item{hess_mu}{Hessian of the log-likelihood with respect to the mean parameters.}
 #'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
@@ -235,6 +237,10 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
     phi*log(phi) - lgamma(phi) + phi*(log(y) - log(mu)- y/mu) - log(y)
   }
 
+  grad_mu <- ef_grad_mu
+
+  hess_mu <- ef_hess_mu
+
   grad_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, phi.vi){
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
     w <- (log(phi) + 1 - digamma(phi) + log(y) - log(mu) - y/mu)*phi.vi(vi)
@@ -319,6 +325,8 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 
               variance = variance,
               loglik = loglik,
+              grad_mu = grad_mu,
+              hess_mu = hess_mu,
               grad_phi = grad_phi,
               hess_phi = hess_phi,
               hess_mu_phi = hess_mu_phi,
@@ -363,6 +371,8 @@ gnlmsa_Gamma <- function(link_mu = "inverse", link_phi = "log"){
 #'
 #'   \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \phi_i}.}
 #'   \item{loglik}{Log-likelihood contribution function for each observation.}
+#'   \item{grad_mu}{Gradient of the log-likelihood with respect to the mean parameters.}
+#'   \item{hess_mu}{Hessian of the log-likelihood with respect to the mean parameters.}
 #'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
 #'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
@@ -448,6 +458,10 @@ gnlmsa_gaussian <- function(link_mu = "identity", link_phi = "log"){
   loglik <- function(y, mu, phi){
     -0.5*(log(2*pi) + log(phi) + (y - mu)^2/phi)
   }
+
+  grad_mu <- ef_grad_mu
+
+  hess_mu <- ef_hess_mu
 
   grad_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, phi.vi){
     if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
@@ -537,6 +551,8 @@ gnlmsa_gaussian <- function(link_mu = "identity", link_phi = "log"){
 
               variance = variance,
               loglik = loglik,
+              grad_mu = grad_mu,
+              hess_mu = hess_mu,
               grad_phi = grad_phi,
               hess_phi = hess_phi,
               hess_mu_phi = hess_mu_phi,

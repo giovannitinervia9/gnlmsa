@@ -77,7 +77,7 @@ phi <- fam_gamma$linkinv_phi(vi)
 y <- rgamma(n, phi, phi/mu)
 
 # compute h_mu
-h_mu <- hess_mu(y, X, beta, mu, eta, phi,
+h_mu <- ef_hess_mu(y, X, beta, mu, eta, phi,
                 f_mu, J_mu, H_mu,
                 fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance)
 

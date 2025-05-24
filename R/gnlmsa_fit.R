@@ -97,10 +97,13 @@ gnlmsa_fit <- function(y, X, Z, family,
 
   variance <- family$variance
 
+  loglik <- family$loglik
+  grad_mu <- family$grad_mu
+  hess_mu <- family$hess_mu
   grad_phi <- family$grad_phi
   hess_phi <- family$hess_phi
   hess_mu_phi <- family$hess_mu_phi
-  loglik <- family$loglik
+
 
 
   beta0 <- beta_start

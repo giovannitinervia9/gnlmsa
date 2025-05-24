@@ -68,12 +68,12 @@
 #' # simulate response
 #' y <- rgamma(n, phi, phi/mu)
 #'
-#' grad_mu(y, X, beta, mu, eta, phi,
+#' ef_grad_mu(y, X, beta, mu, eta, phi,
 #'         f_mu, J_mu,
 #'         fam_gamma$mu.eta, fam_gamma$variance)
 #' }
 #' @export
-grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
+ef_grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
   colSums(J_mu(X, beta)*(mu.eta(eta)/variance(mu, phi))*(y - mu)) # J*w*(y - mu)
 }
@@ -148,15 +148,15 @@ grad_mu <- function(y, X, beta, mu, eta, phi, f_mu, J_mu, mu.eta, variance){
 #' # simulate response
 #' y <- rgamma(n, phi, phi/mu)
 #'
-#' hess_mu(y, X, beta, mu, eta, phi,
+#' ef_hess_mu(y, X, beta, mu, eta, phi,
 #'         f_mu, J_mu, H_mu,
 #'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
 #'         expected = TRUE)
-#' hess_mu(y, X, beta, mu, eta, phi,
+#' ef_hess_mu(y, X, beta, mu, eta, phi,
 #'         f_mu, J_mu, H_mu,
 #'         fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance,
 #'         expected = FALSE)
-hess_mu<- function(y, X, beta, mu, eta, phi,
+ef_hess_mu <- function(y, X, beta, mu, eta, phi,
                    f_mu, J_mu, H_mu,
                    mu.eta, mu2.eta2, variance,
                    expected = TRUE) {
@@ -266,7 +266,7 @@ hess_mu<- function(y, X, beta, mu, eta, phi,
 #' y <- rgamma(n, phi, phi/mu)
 #'
 #' # compute h_mu
-#' h_mu <- hess_mu(y, X, beta, mu, eta, phi,
+#' h_mu <- ef_hess_mu(y, X, beta, mu, eta, phi,
 #'                 f_mu, J_mu, H_mu,
 #'                 fam_gamma$mu.eta, fam_gamma$mu2.eta2, fam_gamma$variance)
 #'

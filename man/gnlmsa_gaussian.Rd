@@ -34,6 +34,8 @@ An object of class \code{family_gnlmsa} (inheriting from \code{family}) with the
 
 \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \phi_i}.}
 \item{loglik}{Log-likelihood contribution function for each observation.}
+\item{grad_mu}{Gradient of the log-likelihood with respect to the mean parameters.}
+\item{hess_mu}{Hessian of the log-likelihood with respect to the mean parameters.}
 \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
 \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
 \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
