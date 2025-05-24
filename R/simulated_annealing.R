@@ -113,6 +113,7 @@ sa_control <- function(iterations = 1000,
 #'   \item{iterations}{Total number of iterations performed.}
 #'   \item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
 #'   \item{control}{Control parameters used during optimization.}
+#'   \item{map_functions}{List of mapping functions used to transform bounded to unbounded parameters.}
 #' }
 #'
 #'
@@ -217,13 +218,37 @@ sa_fit <- function (y, X, Z, family,
   if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
   if(missing(H_phi)) H_phi <- make_hessian(f_phi)
 
+  one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
+
+  npar_mu <- length(lower_mu)
+  npar_phi <- length(lower_phi)
+  npar <- npar_mu + npar_phi
+
   if (!is.null(fixed_params)) {
     fixed <- TRUE
     fixed_position <- fixed_params[[1]]
     fixed_values <- fixed_params[[2]]
+
+    if (one_parameter) {
+      fixed_position <- c(fixed_position, npar_mu + 1)
+      fixed_values <- c(fixed_values, 1)
+    }
+
   } else {
-    fixed <- FALSE
+
+    if (one_parameter) {
+      fixed <- TRUE
+      fixed_position <- npar_mu + 1
+      fixed_values <- 1
+    } else {
+      fixed <- FALSE
+      fixed_position <- integer(0)
+      fixed_values <- numeric(0)
+    }
   }
+
+  free_par <- setdiff(seq_len(npar), fixed_position)
+  npar_free <- length(free_par)
 
   X <- as.matrix(X)
   Z <- as.matrix(Z)
@@ -247,17 +272,15 @@ sa_fit <- function (y, X, Z, family,
   hess_phi <- family$hess_phi
   hess_mu_phi <- family$hess_mu_phi
 
-  lower <- c(lower_mu, lower_phi)
-  upper <- c(upper_mu, upper_phi)
+  lower <- c(lower_mu, lower_phi)[free_par]
+  upper <- c(upper_mu, upper_phi)[free_par]
 
   map_functions <- make_map_function(lower, upper)
   map <- map_functions$map
   invert <- map_functions$invert
   jacobian <- map_functions$map_jacobian
 
-  npar_mu <- length(lower_mu)
-  npar_phi <- length(lower_phi)
-  npar <- npar_mu + npar_phi
+
 
 
   sa_iterations <- sa_control_params$iterations
@@ -268,12 +291,17 @@ sa_fit <- function (y, X, Z, family,
 
 
   par0_con <- c(beta_start, gamma_start)
+  par0_unc <- par1_con <- par1_unc <- numeric(npar)
+
   if (fixed) {
     par0_con[fixed_position] <- fixed_values
+    par0_unc[fixed_position] <- fixed_values
+    par1_con[fixed_position] <- fixed_values
+    par1_unc[fixed_position] <- fixed_values
   }
 
 
-  par0_unc <- map(par0_con)
+  par0_unc[free_par] <- map(par0_con[free_par])
   beta0 <- par0_con[1:npar_mu]
   gamma0 <- par0_con[(npar_mu + 1):npar]
 
@@ -285,8 +313,8 @@ sa_fit <- function (y, X, Z, family,
 
   l0 <- sum(loglik(y, mu0, phi0))
 
-  v <- diag(1e-03, npar)
-  j <- diag(jacobian(par0_con))
+  v <- diag(1e-03, npar_free)
+  j <- diag(jacobian(par0_con))[free_par, free_par]
   v <- j%*%v%*%t(j)
 
 
@@ -323,20 +351,22 @@ sa_fit <- function (y, X, Z, family,
                               f_mu, J_mu, f_phi, J_phi,
                               mu.eta, phi.vi, expected)
 
-      v <- tryCatch(solve(-hess(h_mu, h_phi, h_mu_phi)), error = function(e) diag(1e-06, npar))
+      h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
+
+      v <- tryCatch(solve(-h), error = function(e) diag(1e-06, npar))
 
       if (any(diag(v) < 0) | any(is.nan(v)) | any(is.na(v))) {
-        v <- diag(1e-06, npar)
+        v <- diag(1e-06, npar_free)
       }
 
-      j <- diag(jacobian(par0_con))
+      j <- diag(jacobian(par0_con))[free_par, free_par]
       v <- j%*%v%*%t(j)
 
     }
 
 
-    par1_unc <- sample_par(par0_unc, v, mult, npar)
-    par1_con <- invert(par1_unc)
+    par1_unc[free_par] <- sample_par(par0_unc[free_par], v, mult, npar_free)
+    par1_con[free_par] <- invert(par1_unc[free_par])
 
     if (fixed) {
       par1_con[fixed_position] <- fixed_values
@@ -356,7 +386,7 @@ sa_fit <- function (y, X, Z, family,
 
     if (is.nan(delta)) {
       iter_compute_v <- sa_iterations + 100
-      v <- diag(1e-06, npar)
+      v <- diag(1e-06, npar_free)
       next
     }
 
@@ -415,7 +445,8 @@ sa_fit <- function (y, X, Z, family,
               phi = phi_best,
               iterations = sa_iterations,
               history = NULL,
-              control = sa_control_params)
+              control = sa_control_params,
+              map_functions = map_functions)
 
   if (save_history) {
     out$history <- loglik_history

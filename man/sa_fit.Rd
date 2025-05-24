@@ -89,6 +89,7 @@ A list of class \code{"sa"} with elements:
 \item{iterations}{Total number of iterations performed.}
 \item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
 \item{control}{Control parameters used during optimization.}
+\item{map_functions}{List of mapping functions used to transform bounded to unbounded parameters.}
 }
 }
 \description{

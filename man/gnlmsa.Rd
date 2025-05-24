@@ -97,6 +97,7 @@ A list of class \code{"gnlmsa"} containing:
 \item{lower, upper}{Parameter bounds.}
 \item{family}{The \code{family_gnlmsa} object used.}
 \item{X, Z, y}{Original data matrices and response vector.}
+\item{one_parameter}{Logical indicating wether the family of the object is a one parameter family.}
 }
 }
 \description{

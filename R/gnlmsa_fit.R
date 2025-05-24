@@ -85,6 +85,8 @@ gnlmsa_fit <- function(y, X, Z, family,
   if(missing(J_phi)) J_phi <- make_jacobian(f_phi)
   if(missing(H_phi)) H_phi <- make_hessian(f_phi)
 
+  one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
+
   linkfun_mu <- family$linkfun_mu
   linkinv_mu <- family$linkinv_mu
   mu.eta <- family$mu.eta
@@ -104,8 +106,6 @@ gnlmsa_fit <- function(y, X, Z, family,
   hess_phi <- family$hess_phi
   hess_mu_phi <- family$hess_mu_phi
 
-
-
   beta0 <- beta_start
   gamma0 <- gamma_start
   par0 <- c(beta0, gamma0)
@@ -117,18 +117,31 @@ gnlmsa_fit <- function(y, X, Z, family,
     fixed <- TRUE
     fixed_position <- fixed_params[[1]]
     fixed_values <- fixed_params[[2]]
-    # forza valori iniziali parametri fissi
-    par0[fixed_position] <- fixed_values
-    beta0 <- par0[1:npar_mu]
-    gamma0 <- par0[(npar_mu + 1):npar]
+
+    if (one_parameter) {
+      fixed_position <- c(fixed_position, npar_mu + 1)
+      fixed_values <- c(fixed_values, 1)
+    }
+
   } else {
-    fixed <- FALSE
-    fixed_position <- integer(0)
-    fixed_values <- numeric(0)
+
+    if (one_parameter) {
+      fixed <- TRUE
+      fixed_position <- npar_mu + 1
+      fixed_values <- 1
+    } else {
+      fixed <- FALSE
+      fixed_position <- integer(0)
+      fixed_values <- numeric(0)
+    }
   }
 
   free_par <- setdiff(seq_len(npar), fixed_position)
   npar_free <- length(free_par)
+
+  par0[fixed_position] <- fixed_values
+  beta0 <- par0[1:npar_mu]
+  gamma0 <- par0[(npar_mu + 1):npar]
 
   eta0 <- f_mu(X, beta0)
   mu0 <- linkinv_mu(eta0)

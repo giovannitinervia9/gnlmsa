@@ -36,8 +36,12 @@ print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   cat(paste0("\nFamily: ", x$family$family), "\n")
   cat("\nCoefficients for mean component:\n")
   print.default(format(x$beta), digits = digits, print.gap = 2L, quote = FALSE)
-  cat("\nCoefficients for dispersion component:\n")
-  print.default(format(x$gamma), digits = digits, print.gap = 2L, quote = FALSE)
+
+  if (!x$one_parameter) {
+    cat("\nCoefficients for dispersion component:\n")
+    print.default(format(x$gamma), digits = digits, print.gap = 2L, quote = FALSE)
+
+  }
 
   if (!x$nr_failed) {
     cat("\nNewton-Raphson optimization: SUCCEEDED\nReporting Newton-Raphson estimates")
@@ -105,6 +109,8 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
   phi2.vi2 <- family$phi2.vi2
   variance <- family$variance
 
+  one_parameter <- object$one_parameter
+
 
   hess_mu <- family$hess_mu
   hess_phi <- family$hess_phi
@@ -120,13 +126,25 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
   h_mu_phi <- hess_mu_phi(y, X, Z, beta, gamma, mu, eta, phi, vi, f_mu,
                           J_mu, f_phi, J_phi, mu.eta, phi.vi, expected)
 
-  v <- tryCatch(solve(-hess(h_mu, h_phi, h_mu_phi)),
+  if (one_parameter) {
+    h <- h_mu
+  } else {
+    h <- hess(h_mu, h_phi, h_mu_phi)
+  }
+
+  v <- tryCatch(solve(-h),
                 error = function(e) {
                   matrix(NA, length(c(beta, gamma)), length(c(beta, gamma)))
                 }
   )
 
-  colnames(v) <- rownames(v) <- object$coef_names
+  if (one_parameter) {
+    colnames(v) <- rownames(v) <- names(object$beta)
+  } else {
+    colnames(v) <- rownames(v) <- object$coef_names
+  }
+
+
 
   v
 
@@ -169,6 +187,8 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
 confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "LRT"), expected = TRUE, ...) {
 
   test <- match.arg(test)
+  family <- object$family
+  one_parameter <- object$one_parameter
 
   if (test != "Wald") {
     test <- "Wald"
@@ -177,14 +197,20 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
 
   if (test == "Wald") {
 
-    par <- object$coefficients
+    if (one_parameter) {
+      par <- object$beta
+      coef_names <- names(par)
+    } else {
+      par <- object$coefficients
+      coef_names <- object$coef_names
+    }
+
     v <- vcov.gnlmsa(object, expected)
     map_functions <- object$map_functions
 
     map <- map_functions$map
     invert <- map_functions$invert
     map_jacobian <- map_functions$map_jacobian
-    map_functions
 
     j <- map_jacobian(par)
 
@@ -199,7 +225,7 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
 
     out <- data.frame(inf = inf, sup = sup)
     colnames(out) <- paste0(colnames(out), "_", paste0(c(sig.level/2*100, (1 - sig.level/2)*100), "%"))
-    rownames(out) <- object$coef_names
+    rownames(out) <- coef_names
 
 
   }
@@ -232,7 +258,12 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
 #'
 #' @export
 coef.gnlmsa <- function(object, ...) {
-  object$coefficients
+
+  if (object$one_parameter) {
+    object$beta
+  } else {
+    object$coefficients
+  }
 }
 
 
@@ -323,7 +354,7 @@ fitted.gnlmsa <- function(object, type = c("mu", "phi", "variance", "all"), ...)
 #' @export
 logLik.gnlmsa <- function(object, ...) {
   val <- object$loglik
-  df <- length(object$coefficients)
+  df <- object$df
   attr(val, "df") <- df
   attr(val, "nobs") <- object$nobs
   class(val) <- "logLik"
@@ -382,10 +413,12 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
   npar_mu <- object$npar_mu
   beta <- object$beta
   gamma <- object$gamma
+  one_parameter <- object$one_parameter
 
   v <- diag(vcov.gnlmsa(object, expected))
 
   se_beta <- sqrt(v[1:npar_mu])
+
   se_gamma <- sqrt(v[(npar_mu + 1):length(v)])
 
   ci <- confint.gnlmsa(object, level = level, test = test, expected = expected)
@@ -397,9 +430,19 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
                                 se = se_beta,
                                 ci_beta)
 
-  coefficients.phi <- data.frame(est = gamma,
-                                 se = se_gamma,
-                                 ci_gamma)
+  if (one_parameter) {
+    coefficients.phi <- data.frame(est = 1,
+                                  se = NA,
+                                  NA, NA)
+    rownames(coefficients.phi) <- "phi"
+  } else {
+    coefficients.phi <- data.frame(est = 1,
+                                   se = se_gamma,
+                                   ci_gamma)
+
+  }
+
+
 
   sig.level <- 1 - level
 
@@ -415,7 +458,8 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
               aic = AIC(object),
               bic = BIC(object),
               family = family,
-              test = test
+              test = test,
+              one_parameter = one_parameter
   )
   class(out) <- "summary.gnlmsa"
   out
@@ -464,7 +508,7 @@ print.summary.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), 
 
   cat("\nCoefficients for mean component:\n")
   printCoefmat(x$coefficients.mu, digits = digits)
-  cat("\nCoefficients for dispersion component:\n")
+  cat("\nCoefficients for dispersion component", if(x$one_parameter) "(fixed):\n" else ":\n")
   printCoefmat(x$coefficients.phi, digits = digits)
   cat(paste0("\nConfidence interval: ", x$test, "\n"))
   cat("\n")

@@ -63,6 +63,7 @@
 #'   \item{lower, upper}{Parameter bounds.}
 #'   \item{family}{The `family_gnlmsa` object used.}
 #'   \item{X, Z, y}{Original data matrices and response vector.}
+#'   \item{one_parameter}{Logical indicating wether the family of the object is a one parameter family.}
 #' }
 #' @export
 #' @importFrom stats var
@@ -82,6 +83,8 @@ gnlmsa <- function (y, mean_model, beta_start,
                     expected = TRUE, verbose = TRUE,
                     beta_names, gamma_names) {
 
+  one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
+
   nobs <- NROW(y)
 
   f_mu <- mean_model$f
@@ -91,7 +94,7 @@ gnlmsa <- function (y, mean_model, beta_start,
   upper_mu <- mean_model$upper
   X <- as.matrix(mean_model$X)
 
-  if (is.null(dispersion_model)) {
+  if (is.null(dispersion_model) | one_parameter) {
     f_phi <- Linear()$f
     J_phi <- Linear()$J
     H_phi <- Linear()$H
@@ -107,8 +110,6 @@ gnlmsa <- function (y, mean_model, beta_start,
     upper_phi <- dispersion_model$upper
     Z <- dispersion_model$X
   }
-
-
 
   if(length(lower_mu) != length(upper_mu)) stop("lower_mu and upper_mu must have the same length")
   if(length(lower_phi) != length(upper_phi)) stop("lower_phi and upper_phi must have the same length")
@@ -165,6 +166,7 @@ gnlmsa <- function (y, mean_model, beta_start,
     fit <- sa
     nr_better <- FALSE
     nr_failed <- FALSE
+    warning("\nNewton-Raphson optimization failed to optimize log-likelihood function.\n Try to use more iterations for Simulated Annealing algorithm.")
   }
 
   if (missing(beta_names)) {
@@ -194,8 +196,15 @@ gnlmsa <- function (y, mean_model, beta_start,
   names(gamma) <- gamma_names
 
   loglik <- fit$loglik
-  df.residuals <- nobs - npar
-  df <- npar
+
+  if (one_parameter) {
+    df <- length(beta)
+  } else {
+    df <- npar
+  }
+
+  df.residuals <- nobs - df
+
 
   out <- list(coefficients = c(beta, gamma),
               beta = beta,
@@ -220,10 +229,11 @@ gnlmsa <- function (y, mean_model, beta_start,
               Z = Z,
               mean_model = list(f_mu = f_mu, J_mu = J_mu, H_mu = H_mu),
               dispersion_model = list(f_phi = f_phi, J_phi = J_phi, H_phi = H_phi),
-              map_functions = map_functions,
+              map_functions = sa$map_functions,
               lower = lower,
               upper = upper,
-              fixed_params = fixed_params)
+              fixed_params = fixed_params,
+              one_parameter = one_parameter)
   class(out) <- "gnlmsa"
 
   out
