@@ -61,7 +61,7 @@ following components:
 
 \item{sa_control_params}{A list of Simulated Annealing options created via \code{\link[=sa_control]{sa_control()}}.}
 
-\item{fixed_params}{A list containing two numeric vectors of the same length (not yet implemented):
+\item{fixed_params}{A list containing two numeric vectors of the same length:
 \itemize{
 \item The first vector specifies the indices of the parameters to be fixed.
 \item The second vector provides the corresponding fixed values for those parameters.

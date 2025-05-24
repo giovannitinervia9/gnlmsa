@@ -36,7 +36,7 @@
 #' @param mult Proposal scaling factor for the Simulated Annealing algorithm.
 #' @param nsim Number of independent Simulated Annealing simulations (currently only 1 is supported).
 #' @param sa_control_params A list of Simulated Annealing options created via [sa_control()].
-#' @param fixed_params A list containing two numeric vectors of the same length (not yet implemented):
+#' @param fixed_params A list containing two numeric vectors of the same length:
 #'   - The first vector specifies the indices of the parameters to be fixed.
 #'   - The second vector provides the corresponding fixed values for those parameters.
 #' @param maxit Maximum number of Newton-Raphson iterations.
@@ -171,6 +171,7 @@ gnlmsa <- function (y, mean_model, beta_start,
                             H_mu = H_mu,
                             f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
                             beta_start = sa$beta, gamma_start = sa$gamma,
+                            fixed_params = fixed_params,
                             maxit = 100, tol = 1e-05, expected = TRUE),
                  error = function(e) "FAILED")
 
@@ -244,7 +245,8 @@ gnlmsa <- function (y, mean_model, beta_start,
               dispersion_model = list(f_phi = f_phi, J_phi = J_phi, H_phi = H_phi),
               map_functions = map_functions,
               lower = lower,
-              upper = upper)
+              upper = upper,
+              fixed_params = fixed_params)
   class(out) <- "gnlmsa"
 
   out

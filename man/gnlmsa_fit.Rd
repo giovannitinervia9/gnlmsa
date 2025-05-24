@@ -17,6 +17,7 @@ gnlmsa_fit(
   H_phi,
   beta_start,
   gamma_start,
+  fixed_params = NULL,
   maxit = 100,
   tol = 1e-05,
   expected = TRUE
@@ -46,6 +47,12 @@ gnlmsa_fit(
 \item{beta_start}{Initial values for the parameters of the mean component.}
 
 \item{gamma_start}{Initial values for the parameters of the dispersion component.}
+
+\item{fixed_params}{A list containing two numeric vectors of the same length:
+\itemize{
+\item The first vector specifies the indices of the parameters to be fixed.
+\item The second vector provides the corresponding fixed values for those parameters.
+}}
 
 \item{maxit}{Integer. Maximum number of iterations (default: 100).}
 

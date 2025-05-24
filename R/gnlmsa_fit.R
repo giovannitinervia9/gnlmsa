@@ -25,6 +25,9 @@
 #' @param H_phi Optional. Hessian of \code{f_phi}.
 #' @param beta_start Initial values for the parameters of the mean component.
 #' @param gamma_start Initial values for the parameters of the dispersion component.
+#' @param fixed_params A list containing two numeric vectors of the same length:
+#'   - The first vector specifies the indices of the parameters to be fixed.
+#'   - The second vector provides the corresponding fixed values for those parameters.
 #' @param maxit Integer. Maximum number of iterations (default: 100).
 #' @param tol Numeric. Convergence tolerance on parameter updates (default: 1e-5).
 #' @param expected Logical; if \code{TRUE} (default), the expected (Fisher) information is used for the Hessian.
@@ -72,7 +75,9 @@
 gnlmsa_fit <- function(y, X, Z, family,
                        f_mu, J_mu, H_mu,
                        f_phi, J_phi, H_phi,
-                       beta_start, gamma_start, maxit = 100, tol = 1e-05,
+                       beta_start, gamma_start,
+                       fixed_params = NULL,
+                       maxit = 100, tol = 1e-05,
                        expected = TRUE) {
 
   if(missing(J_mu)) J_mu <- make_jacobian(f_mu)
@@ -102,6 +107,25 @@ gnlmsa_fit <- function(y, X, Z, family,
   gamma0 <- gamma_start
   par0 <- c(beta0, gamma0)
   npar_mu <- length(beta0)
+  npar <- length(par0)
+
+
+  if (!is.null(fixed_params)) {
+    fixed <- TRUE
+    fixed_position <- fixed_params[[1]]
+    fixed_values <- fixed_params[[2]]
+    # forza valori iniziali parametri fissi
+    par0[fixed_position] <- fixed_values
+    beta0 <- par0[1:npar_mu]
+    gamma0 <- par0[(npar_mu + 1):npar]
+  } else {
+    fixed <- FALSE
+    fixed_position <- integer(0)
+    fixed_values <- numeric(0)
+  }
+
+  free_par <- setdiff(seq_len(npar), fixed_position)
+  npar_free <- length(free_par)
 
   eta0 <- f_mu(X, beta0)
   mu0 <- linkinv_mu(eta0)
@@ -112,6 +136,8 @@ gnlmsa_fit <- function(y, X, Z, family,
   l0 <- sum(loglik(y, mu0, phi0))
   dev <- rep(2, length(par0))
   it <- 0
+  par1 <- numeric(npar)
+  par1[fixed_position] <- fixed_values
 
   while ((any(dev > tol)) && it <= maxit) {
 
@@ -119,7 +145,7 @@ gnlmsa_fit <- function(y, X, Z, family,
 
     g_mu <- grad_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, mu.eta, variance)
     g_phi <- grad_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, phi.vi)
-    g <- c(g_mu, g_phi)
+    g <- c(g_mu, g_phi)[free_par]
 
     h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
                     variance, expected)
@@ -127,11 +153,13 @@ gnlmsa_fit <- function(y, X, Z, family,
                       phi2.vi2, expected)
     h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0, mu0, eta0, phi0, vi0, f_mu, J_mu,
                             f_phi, J_phi, mu.eta, phi.vi, expected)
-    h <- hess(h_mu, h_phi, h_mu_phi)
+    h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
 
-    par1 <- par0 - solve(h, g)
+    par1[free_par] <- par0[free_par] - tryCatch(solve(h, g), error = function(e) {
+      solve(h + diag(1e-07, npar_free), g)})
+
     beta1 <- par1[1:npar_mu]
-    gamma1 <- par1[(npar_mu + 1):length(par1)]
+    gamma1 <- par1[(npar_mu + 1):npar]
 
     eta1 <- f_mu(X, beta1)
     mu1 <- linkinv_mu(eta1)
