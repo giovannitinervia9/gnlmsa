@@ -6,9 +6,9 @@
 \usage{
 sa_control(
   iterations = 1000,
-  compute_v = floor(iterations * 0.3),
   initial_temperature = 100,
   final_temperature = 1,
+  compute_v = floor(iterations * 0.3),
   restart_if_stuck = floor(iterations * 0.3),
   save_history = FALSE
 )
@@ -16,12 +16,12 @@ sa_control(
 \arguments{
 \item{iterations}{Integer. Total number of iterations for the Simulated Annealing algorithm.}
 
-\item{compute_v}{Integer. Frequency (in iterations) at which the variance-covariance matrix used
-for proposal generation is updated. Default is every 30\% of total iterations.}
-
 \item{initial_temperature}{Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.}
 
 \item{final_temperature}{Numeric. Final value of the temperature at which the cooling schedule stops.}
+
+\item{compute_v}{Integer. Frequency (in iterations) at which the variance-covariance matrix used
+for proposal generation is updated. Default is every 30\% of total iterations.}
 
 \item{restart_if_stuck}{Integer. Number of consecutive iterations without improvement after which
 the algorithm restarts from the last best parameter vector. Helps escape local optima.}

@@ -145,7 +145,6 @@ gnlmsa_fit <- function(y, X, Z, family,
     check <- l1 - l0 > 0
     if (!check) {
       warning("log-likelihood decreased at iteration ", it)
-      break
     }
 
     par0 <- par1
