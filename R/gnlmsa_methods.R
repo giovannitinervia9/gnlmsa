@@ -1,6 +1,3 @@
-
-
-
 #-------------------------------------------------------------------------------
 
 
@@ -31,7 +28,6 @@
 #'
 #' @export
 print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-
   cat("\nGeneralized Non-Linear Model")
   cat(paste0("\nFamily: ", x$family$family), "\n")
   cat("\nCoefficients for mean component:\n")
@@ -40,7 +36,6 @@ print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
   if (!x$one_parameter) {
     cat("\nCoefficients for dispersion component:\n")
     print.default(format(x$gamma), digits = digits, print.gap = 2L, quote = FALSE)
-
   }
 
   if (!x$nr_failed) {
@@ -49,7 +44,6 @@ print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
     cat("\nNewton-Raphson optimization: FAILED\nReporting Simulated Annealing estimates")
   }
   invisible(x)
-
 }
 
 
@@ -82,7 +76,6 @@ print.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
 #'
 #' @export
 vcov.gnlmsa <- function(object, expected = TRUE, ...) {
-
   y <- object$y
 
   X <- object$X
@@ -117,14 +110,20 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
   hess_mu_phi <- family$hess_mu_phi
 
 
-  h_mu <- hess_mu(y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu,
-                  mu.eta, mu2.eta2, variance, expected)
+  h_mu <- hess_mu(
+    y, X, beta, mu, eta, phi, f_mu, J_mu, H_mu,
+    mu.eta, mu2.eta2, variance, expected
+  )
 
-  h_phi <- hess_phi(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi,
-                    phi.vi, phi2.vi2, expected)
+  h_phi <- hess_phi(
+    y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi,
+    phi.vi, phi2.vi2, expected
+  )
 
-  h_mu_phi <- hess_mu_phi(y, X, Z, beta, gamma, mu, eta, phi, vi, f_mu,
-                          J_mu, f_phi, J_phi, mu.eta, phi.vi, expected)
+  h_mu_phi <- hess_mu_phi(
+    y, X, Z, beta, gamma, mu, eta, phi, vi, f_mu,
+    J_mu, f_phi, J_phi, mu.eta, phi.vi, expected
+  )
 
   if (one_parameter) {
     h <- h_mu
@@ -133,9 +132,9 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
   }
 
   v <- tryCatch(solve(-h),
-                error = function(e) {
-                  matrix(NA, length(c(beta, gamma)), length(c(beta, gamma)))
-                }
+    error = function(e) {
+      matrix(NA, length(c(beta, gamma)), length(c(beta, gamma)))
+    }
   )
 
   if (one_parameter) {
@@ -147,7 +146,6 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
 
 
   v
-
 }
 
 
@@ -185,7 +183,6 @@ vcov.gnlmsa <- function(object, expected = TRUE, ...) {
 #'
 #' @export
 confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "LRT"), expected = TRUE, ...) {
-
   test <- match.arg(test)
   family <- object$family
   one_parameter <- object$one_parameter
@@ -196,7 +193,6 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
   }
 
   if (test == "Wald") {
-
     if (one_parameter) {
       par <- object$beta
       coef_names <- names(par)
@@ -214,24 +210,21 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
 
     j <- map_jacobian(par)
 
-    v_map <- diag(j)%*%v%*%t(diag(j))
+    v_map <- diag(j) %*% v %*% t(diag(j))
     se_map <- sqrt(diag(v_map))
     sig.level <- 1 - level
-    q <- qnorm(1 - sig.level/2)
+    q <- qnorm(1 - sig.level / 2)
 
-    inf <- invert(map(par) - q*se_map)
-    sup <- invert(map(par) + q*se_map)
+    inf <- invert(map(par) - q * se_map)
+    sup <- invert(map(par) + q * se_map)
 
 
     out <- data.frame(inf = inf, sup = sup)
-    colnames(out) <- paste0(colnames(out), "_", paste0(c(sig.level/2*100, (1 - sig.level/2)*100), "%"))
+    colnames(out) <- paste0(colnames(out), "_", paste0(c(sig.level / 2 * 100, (1 - sig.level / 2) * 100), "%"))
     rownames(out) <- coef_names
-
-
   }
 
   out
-
 }
 
 
@@ -258,7 +251,6 @@ confint.gnlmsa <- function(object, parm, level = 0.95, test = c("Wald", "Rao", "
 #'
 #' @export
 coef.gnlmsa <- function(object, ...) {
-
   if (object$one_parameter) {
     object$beta
   } else {
@@ -301,24 +293,21 @@ coef.gnlmsa <- function(object, ...) {
 #'
 #' @export
 fitted.gnlmsa <- function(object, type = c("mu", "phi", "variance", "all"), ...) {
-
   type <- match.arg(type)
 
   if (type == "mu") {
     object$mu
-  }
-  else if (type == "phi") {
+  } else if (type == "phi") {
     object$phi
-  }
-  else if (type == "variance") {
+  } else if (type == "variance") {
     object$family$variance(object$mu, object$phi)
+  } else {
+    data.frame(
+      mu = object$mu,
+      phi = object$phi,
+      variance = object$family$variance(object$mu, object$phi)
+    )
   }
-  else {
-    data.frame(mu = object$mu,
-               phi = object$phi,
-               variance = object$family$variance(object$mu, object$phi))
-  }
-
 }
 
 
@@ -366,6 +355,7 @@ logLik.gnlmsa <- function(object, ...) {
 #-------------------------------------------------------------------------------
 
 
+
 #' Summarize a Fitted Generalized Non-Linear Model
 #'
 #' Produces a summary for a fitted Generalized Non-Linear Model (GNLM) object of class `"gnlmsa"`,
@@ -405,9 +395,8 @@ logLik.gnlmsa <- function(object, ...) {
 #'
 #' @export
 summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"), expected = TRUE, ...) {
-
   test <- match.arg(test)
-  if(test != "Wald") test <- "Wald"
+  if (test != "Wald") test <- "Wald"
 
   family <- object$family
   npar_mu <- object$npar_mu
@@ -426,49 +415,56 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
   ci_beta <- ci[1:npar_mu, ]
   ci_gamma <- ci[(npar_mu + 1):length(v), ]
 
-  coefficients.mu <- data.frame(est = beta,
-                                se = se_beta,
-                                ci_beta)
+  coefficients.mu <- data.frame(
+    est = beta,
+    se = se_beta,
+    ci_beta
+  )
 
   if (one_parameter) {
-    coefficients.phi <- data.frame(est = 1,
-                                  se = NA,
-                                  NA, NA)
+    coefficients.phi <- data.frame(
+      est = 1,
+      se = NA,
+      NA, NA
+    )
     rownames(coefficients.phi) <- "phi"
   } else {
-    coefficients.phi <- data.frame(est = 1,
-                                   se = se_gamma,
-                                   ci_gamma)
-
+    coefficients.phi <- data.frame(
+      est = gamma,
+      se = se_gamma,
+      ci_gamma
+    )
   }
 
 
 
   sig.level <- 1 - level
 
-  ci_names <- paste0(c("inf", "sup"), "_", paste0(c(sig.level/2*100, (1 - sig.level/2)*100), "%"))
+  ci_names <- paste0(c("inf", "sup"), "_", paste0(c(sig.level / 2 * 100, (1 - sig.level / 2) * 100), "%"))
   colnames(coefficients.mu) <- colnames(coefficients.phi) <- c("Estimate", "SE", ci_names)
 
 
-  out <- list(coefficients.mu = coefficients.mu,
-              coefficients.phi = coefficients.phi,
-              nr_failed = object$nr_failed,
-              nr_better = object$nr_better,
-              loglik = as.numeric(logLik(object)),
-              aic = AIC(object),
-              bic = BIC(object),
-              family = family,
-              test = test,
-              one_parameter = one_parameter
+  out <- list(
+    coefficients.mu = coefficients.mu,
+    coefficients.phi = coefficients.phi,
+    nr_failed = object$nr_failed,
+    nr_better = object$nr_better,
+    loglik = as.numeric(logLik(object)),
+    aic = AIC(object),
+    bic = BIC(object),
+    family = family,
+    test = test,
+    one_parameter = one_parameter
   )
   class(out) <- "summary.gnlmsa"
   out
-
 }
 
 
 
 #-------------------------------------------------------------------------------
+
+
 
 #' Print Method for Summary of Generalized Non-Linear Models
 #'
@@ -496,7 +492,6 @@ summary.gnlmsa <- function(object, level = 0.95, test = c("Wald", "Rao", "LRT"),
 #' @importFrom stats printCoefmat
 #' @export
 print.summary.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), ...) {
-
   cat("\nGeneralized Non-Linear Model")
   cat(paste0("\nFamily: ", x$family$family), "\n")
 
@@ -508,14 +503,62 @@ print.summary.gnlmsa <- function(x, digits = max(3L, getOption("digits") - 3L), 
 
   cat("\nCoefficients for mean component:\n")
   printCoefmat(x$coefficients.mu, digits = digits)
-  cat("\nCoefficients for dispersion component", if(x$one_parameter) "(fixed):\n" else ":\n")
+  cat("\nCoefficients for dispersion component", if (x$one_parameter) " (fixed):\n" else ":\n", sep = "")
   printCoefmat(x$coefficients.phi, digits = digits)
   cat(paste0("\nConfidence interval: ", x$test, "\n"))
   cat("\n")
   print.default(c(loglik = x$loglik, AIC = x$aic, BIC = x$bic), digits = digits)
   invisible(x)
-
 }
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
+#' Residual method for \code{gnlmsa}
+#'
+#' Compute residuals for objects of class \code{gnlmsa}.
+#'
+#' @param object An object of class \code{gnlmsa}, typically returned by a call to the fitting function (e.g., \code{gnlmsa()}).
+#' @param type Character. The type of residuals to compute. One of:
+#'   \describe{
+#'     \item{\code{"pearson"}}{Pearson residuals: \eqn{(y_i - \mu_i) / \sqrt{v(\mu_i, \phi_i)}}.}
+#'     \item{\code{"response"}}{Response residuals: \eqn{y - \mu_i}.}
+#'     \item{\code{"deviance"}}{Deviance residuals: \eqn{\mathrm{sign}(y - \mu)\sqrt{2\{\,\ell(y_i; y_i, \phi_i) - \ell(y_i; \mu_i, \phi_i)\}}}, where \eqn{\ell(\cdot)} is the log-likelihood.}
+#'   }
+#'   Defaults to \code{c("pearson", "response", "deviance")}.
+#' @param ...  further arguments passed to or from other methods..
+#'
+#' @return A numeric vector of residuals of the specified type, one for each observation.
+#'
+#' @details
+#' This S3 method dispatches on class \code{gnlmsa} and computes residuals using
+#' the fitted mean \eqn{\mu}, dispersion \eqn{\phi}, and variance function
+#' \eqn{v(\mu, \phi)} stored in the \code{object}.
+#'
+#' @export
+residuals.gnlmsa <- function(object, type = c("pearson", "response", "deviance"), ...) {
+  y <- object$y
+  mu <- object$mu
+  phi <- object$phi
+  v <- object$family$variance(mu, phi)
+  type <- match.arg(type)
+
+  if (type == "pearson") {
+    (y - mu) / sqrt(v)
+  } else if (type == "response") {
+    y - mu
+  } else if (type == "deviance") {
+    l <- object$family$loglik
+    sign(y - mu) * sqrt(2 * (l(y, y, phi) - l(y, mu, phi)))
+  }
+}
+
+
+
+
 
 
 
