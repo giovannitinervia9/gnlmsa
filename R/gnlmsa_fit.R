@@ -143,10 +143,10 @@ gnlmsa_fit <- function(y, X, Z, family,
   beta0 <- par0[1:npar_mu]
   gamma0 <- par0[(npar_mu + 1):npar]
 
-  eta0 <- f_mu(X, beta0)
+  eta0 <- drop(f_mu(X, beta0))
   mu0 <- linkinv_mu(eta0)
 
-  vi0 <- f_phi(Z, gamma0)
+  vi0 <- drop(f_phi(Z, gamma0))
   phi0 <- linkinv_phi(vi0)
 
   l0 <- sum(loglik(y, mu0, phi0))
@@ -177,10 +177,10 @@ gnlmsa_fit <- function(y, X, Z, family,
     beta1 <- par1[1:npar_mu]
     gamma1 <- par1[(npar_mu + 1):npar]
 
-    eta1 <- f_mu(X, beta1)
+    eta1 <- drop(f_mu(X, beta1))
     mu1 <- linkinv_mu(eta1)
 
-    vi1 <- f_phi(Z, gamma1)
+    vi1 <- drop(f_phi(Z, gamma1))
     phi1 <- linkinv_phi(vi1)
 
     l1 <- sum(loglik(y, mu1, phi1))
