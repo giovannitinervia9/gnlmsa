@@ -8,6 +8,7 @@ sa_control(
   iterations = 1000,
   initial_temperature = 100,
   final_temperature = 1,
+  update_v = FALSE,
   compute_v = floor(iterations * 0.3),
   restart_if_stuck = floor(iterations * 0.3),
   save_history = FALSE
@@ -20,7 +21,9 @@ sa_control(
 
 \item{final_temperature}{Numeric. Final value of the temperature at which the cooling schedule stops.}
 
-\item{compute_v}{Integer. Frequency (in iterations) at which the variance-covariance matrix used
+\item{update_v}{Logical. If \code{TRUE}, the variance covariance matrix of the sampler is updated. Default is \code{FALSE}.}
+
+\item{compute_v}{Integer. Number of iterations after which the variance-covariance matrix used
 for proposal generation is updated. Default is every 30\% of total iterations.}
 
 \item{restart_if_stuck}{Integer. Number of consecutive iterations without improvement after which

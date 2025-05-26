@@ -16,7 +16,8 @@
 #' @param iterations Integer. Total number of iterations for the Simulated Annealing algorithm.
 #' @param initial_temperature Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.
 #' @param final_temperature Numeric. Final value of the temperature at which the cooling schedule stops.
-#' @param compute_v Integer. Frequency (in iterations) at which the variance-covariance matrix used
+#' @param update_v Logical. If \code{TRUE}, the variance covariance matrix of the sampler is updated. Default is \code{FALSE}.
+#' @param compute_v Integer. Number of iterations after which the variance-covariance matrix used
 #'   for proposal generation is updated. Default is every 30% of total iterations.
 #' @param restart_if_stuck Integer. Number of consecutive iterations without improvement after which
 #'   the algorithm restarts from the last best parameter vector. Helps escape local optima.
@@ -33,6 +34,7 @@
 sa_control <- function(iterations = 1000,
                        initial_temperature = 100,
                        final_temperature = 1,
+                       update_v = FALSE,
                        compute_v = floor(iterations*0.3),
                        restart_if_stuck = floor(iterations*0.3),
                        save_history = FALSE
@@ -50,6 +52,7 @@ sa_control <- function(iterations = 1000,
   list(iterations = iterations,
        initial_temperature = initial_temperature,
        final_temperature = final_temperature,
+       update_v = update_v,
        compute_v = compute_v,
        restart_if_stuck = restart_if_stuck,
        save_history = save_history)
@@ -285,6 +288,7 @@ sa_fit <- function (y, X, Z, family,
 
   sa_iterations <- sa_control_params$iterations
   sa_compute_v <- sa_control_params$compute_v
+  sa_update_v <- sa_control_params$update_v
   iter_compute_v <- which(seq_len(sa_iterations) %% sa_compute_v == 0)
   restart_if_stuck <- sa_control_params$restart_if_stuck
   save_history <- sa_control_params$save_history
@@ -336,33 +340,37 @@ sa_fit <- function (y, X, Z, family,
   stuck_it <- 0
 
   for(i in seq_len(sa_iterations)){
-    # recompute variance covariance matrix
-    if (i %in% iter_compute_v) {
-      h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0,
-                      f_mu, J_mu, H_mu,
-                      mu.eta, mu2.eta2, variance, expected)
 
-      h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0,
-                        f_phi, J_phi, H_phi,
-                        phi.vi, phi2.vi2, expected)
+    if (sa_update_v) {
+      # recompute variance covariance matrix
+      if (i %in% iter_compute_v) {
+        h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0,
+                        f_mu, J_mu, H_mu,
+                        mu.eta, mu2.eta2, variance, expected)
 
-      h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0,
-                              mu0, eta0, phi0, vi0,
-                              f_mu, J_mu, f_phi, J_phi,
-                              mu.eta, phi.vi, expected)
+        h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0,
+                          f_phi, J_phi, H_phi,
+                          phi.vi, phi2.vi2, expected)
 
-      h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
+        h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0,
+                                mu0, eta0, phi0, vi0,
+                                f_mu, J_mu, f_phi, J_phi,
+                                mu.eta, phi.vi, expected)
 
-      v <- tryCatch(solve(-h), error = function(e) diag(1e-06, npar))
+        h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
 
-      if (any(diag(v) < 0) | any(is.nan(v)) | any(is.na(v))) {
-        v <- diag(1e-06, npar_free)
+        v <- tryCatch(solve(-h), error = function(e) diag(1e-06, npar))
+
+        if (any(diag(v) < 0) | any(is.nan(v)) | any(is.na(v))) {
+          v <- diag(1e-06, npar_free)
+        }
+
+        j <- diag(jacobian(par0_con))[free_par, free_par]
+        v <- j%*%v%*%t(j)
+
       }
-
-      j <- diag(jacobian(par0_con))[free_par, free_par]
-      v <- j%*%v%*%t(j)
-
     }
+
 
 
     par1_unc[free_par] <- sample_par(par0_unc[free_par], v, mult, npar_free)
@@ -455,7 +463,6 @@ sa_fit <- function (y, X, Z, family,
   class(out) <- "sa"
 
   out
-
 }
 
 
