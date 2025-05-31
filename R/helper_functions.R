@@ -463,6 +463,54 @@ make_map_function <- function(lower, upper) {
 
 
 
+#' Reparameterize Gradients and Hessians for `gnlmsa_fit`
+#'
+#' In the \pkg{gnlmsa} framework, model parameters may be
+#' constrained (e.g., positive‐only, bounded between 0 and 1).
+#' \pkg{gnlmsa_fit} performs likelihood optimization via Newton-Raphson algorithm on the
+#' unconstrained scale (see [make_map_function()] for details about the transformation).
+#' \code{reparametrize()} automates the chain‐rule adjustment
+#' of both the gradient and Hessian of the log-likelihood
+#' when moving from the constrained space to the unconstrained space.
+#'
+#' @param theta Numeric vector of the parameters in the constrained space.
+#'
+#' @param g Numeric vector representing the gradient of the log-likelihood function in the constrained space.
+#'
+#' @param h Numeric matrix representing the hessian of the log-likelihood function in the constrained space.
+#'
+#' @param map_functions a list as created by [make_map_function()].
+#'
+#' @return
+#'   A named list with two elements:
+#'   \describe{
+#'     \item{\code{g_map}}{Numeric vector representing the gradient of the log-likelihood function in the unconstrained space.}
+#'     \item{\code{h_map}}{Numeric matrix representing the hessian of the log-likelihood function in the unconstrained space.}
+#'   }
+#'
+#' @keywords internal
+#' @export
+reparametrize <- function(theta, g, h, map_functions) {
+  map <- map_functions$map
+  invert_jacobian <- map_functions$invert_jacobian
+  invert_hessian <- map_functions$invert_hessian
+
+  dy <- diag(invert_jacobian(map(theta)))
+  d2y <- diag(invert_hessian(map(theta)))
+
+  g_map <- drop(dy%*%g)
+  h_map <- dy%*%h%*%dy + diag(g)%*%d2y
+
+  list(g_map = g_map, h_map = h_map)
+
+}
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
 #' Sample new parameter values
 #'
 #' This function samples new parameter values using a multivariate normal distribution,
