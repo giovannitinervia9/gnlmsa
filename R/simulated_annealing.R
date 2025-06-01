@@ -343,6 +343,12 @@ sa_fit <- function (y, X, Z, family,
 
   stuck_it <- 0
 
+  if (verbose) {
+    cat("\n")
+    cat("Simulated annealing:\n")
+  }
+
+
   for(i in seq_len(sa_iterations)){
 
     if (sa_update_v) {

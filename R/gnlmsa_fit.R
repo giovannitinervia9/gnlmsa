@@ -23,7 +23,7 @@
 #'
 #'
 #' @export
-nr_control <- function(maxit = 1000,
+nr_control <- function(maxit = 100,
                        tol = 1e-05,
                        expected = FALSE,
                        unconstrained = TRUE,
@@ -194,10 +194,6 @@ gnlmsa_fit <- function(y, X, Z, family,
   npar_mu <- length(beta0)
   npar <- length(par0)
 
-
-
-
-
   if (!is.null(fixed_params)) {
     fixed <- TRUE
     fixed_position <- fixed_params[[1]]
@@ -248,28 +244,36 @@ gnlmsa_fit <- function(y, X, Z, family,
   jacobian <- map_functions$map_jacobian
   l_hist <- l0
 
+  g_mu <- grad_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, mu.eta, variance)
+  g_phi <- grad_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, phi.vi)
+  g <- c(g_mu, g_phi)
+
+  h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
+                  variance, expected)
+  h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, H_phi, phi.vi,
+                    phi2.vi2, expected)
+  h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0, mu0, eta0, phi0, vi0, f_mu, J_mu,
+                          f_phi, J_phi, mu.eta, phi.vi, expected)
+  h <- hess(h_mu, h_phi, h_mu_phi)
+
+  if (verbose) {
+    cat("\n")
+    cat("Newton-Raphson optimization:\n")
+    cat("iter: ", 0,
+        ", loglik: ", l0,
+        ", mean abs. grad.: ", mean(abs(g[free_par])),
+        "\n",
+        sep = "")
+  }
+
   while ((any(dev > tol)) && it <= maxit) {
 
     it <- it + 1
 
-    g_mu <- grad_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, mu.eta, variance)
-    g_phi <- grad_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, phi.vi)
-    g <- c(g_mu, g_phi)
-
-    h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
-                    variance, expected)
-    h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, H_phi, phi.vi,
-                      phi2.vi2, expected)
-    h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0, mu0, eta0, phi0, vi0, f_mu, J_mu,
-                            f_phi, J_phi, mu.eta, phi.vi, expected)
-    h <- hess(h_mu, h_phi, h_mu_phi)
-
     if (unconstrained){
-
       rr <- reparametrize(par0, g, h, map_functions)
       step <- tryCatch(solve(rr$h_map[free_par, free_par], rr$g_map[free_par]), error = function(e) {
         solve(rr$h_map[free_par, free_par] + diag(reg, npar_free), rr$g_map[free_par])})
-
       par1[free_par] <- invert(map(par0[free_par]) - step)
 
     } else {
@@ -277,8 +281,6 @@ gnlmsa_fit <- function(y, X, Z, family,
         solve(h[free_par, free_par] + diag(reg, npar_free), g[free_par])})
       par1[free_par] <- par0[free_par] - step
     }
-
-
 
     beta1 <- par1[1:npar_mu]
     gamma1 <- par1[(npar_mu + 1):npar]
@@ -293,9 +295,6 @@ gnlmsa_fit <- function(y, X, Z, family,
 
     dev <- abs(par1 - par0)
     check <- l1 - l0 > 0
-    if (!check & verbose) {
-      warning("log-likelihood decreased at iteration ", it)
-    }
 
     par0 <- par1
     beta0 <- beta1
@@ -307,20 +306,27 @@ gnlmsa_fit <- function(y, X, Z, family,
     l0 <- l1
     l_hist <- c(l_hist, l1)
 
+    g_mu <- grad_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, mu.eta, variance)
+    g_phi <- grad_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, phi.vi)
+    g <- c(g_mu, g_phi)
+
+    h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
+                    variance, expected)
+    h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, H_phi, phi.vi,
+                      phi2.vi2, expected)
+    h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0, mu0, eta0, phi0, vi0, f_mu, J_mu,
+                            f_phi, J_phi, mu.eta, phi.vi, expected)
+    h <- hess(h_mu, h_phi, h_mu_phi)
+
+    if (verbose) {
+      cat("iter: ", it,
+          ", loglik: ", l0, if(!check) " (decreased!)",
+          ", mean abs. grad.: ", mean(abs(g[free_par])),
+          "\n",
+          sep = "")
+    }
+
   }
-
-  g_mu <- grad_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, mu.eta, variance)
-  g_phi <- grad_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, phi.vi)
-  g <- c(g_mu, g_phi)[free_par]
-
-  h_mu <- hess_mu(y, X, beta0, mu0, eta0, phi0, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
-                  variance, expected)
-  h_phi <- hess_phi(y, Z, gamma0, phi0, vi0, mu0, f_phi, J_phi, H_phi, phi.vi,
-                    phi2.vi2, expected)
-  h_mu_phi <- hess_mu_phi(y, X, Z, beta0, gamma0, mu0, eta0, phi0, vi0, f_mu, J_mu,
-                          f_phi, J_phi, mu.eta, phi.vi, expected)
-  h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
-
 
   out <- list(beta = beta0, gamma = gamma0, loglik = l0,
               eta = eta0, mu = mu0, vi = vi0, phi = phi0,
