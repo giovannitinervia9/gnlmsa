@@ -84,6 +84,8 @@ A list of class \code{"sa"} with elements:
 \item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
 \item{control}{Control parameters used during optimization.}
 \item{map_functions}{List of mapping functions used to transform bounded to unbounded parameters.}
+\item{gradient, hessian}{Gradient and Hessian at the estimated values of the parameters (free
+parameters only).}
 }
 }
 \description{

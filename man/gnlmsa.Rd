@@ -89,6 +89,10 @@ A list of class \code{"gnlmsa"} containing:
 \item{family}{The \code{family_gnlmsa} object used.}
 \item{X, Z, y}{Original data matrices and response vector.}
 \item{one_parameter}{Logical indicating wether the family of the object is a one parameter family.}
+\item{gradient, hessian}{Gradient and Hessian at the estimated values of the parameters (free
+parameters only).}
+\item{nr}{The object returned from \code{gnlmsa_fit()} function.}
+\item{sa}{The object returned from \code{sa_fit()} function.}
 }
 }
 \description{

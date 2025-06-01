@@ -167,12 +167,12 @@ gnlmsa <- function (y, mean_model, beta_start,
     warning("\nNewton-Raphson optimization failed to optimize log-likelihood function.\n Try to use more iterations for Simulated Annealing algorithm.")
   } else if (nr$loglik >= sa$loglik) {
     fit <- nr
-    nr_better <- TRUE
     nr_failed <- FALSE
+    nr_better <- TRUE
   } else {
     fit <- sa
+    nr_failed <- TRUE
     nr_better <- FALSE
-    nr_failed <- FALSE
     warning("\nNewton-Raphson optimization failed to optimize log-likelihood function.\n Try to use more iterations for Simulated Annealing algorithm.")
   }
 

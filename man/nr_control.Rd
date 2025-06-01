@@ -5,12 +5,13 @@
 \title{Control Parameters for Newton-Raphson Algorithm}
 \usage{
 nr_control(
-  maxit = 1000,
+  maxit = 100,
   tol = 1e-05,
   expected = FALSE,
   unconstrained = TRUE,
   verbose = TRUE,
-  regularization = 0.001
+  regularization = 0.001,
+  max_step_halving = 30
 )
 }
 \arguments{
@@ -27,6 +28,8 @@ If \code{FALSE} (default), the observed Hessian is the original parameter space.
 \item{verbose}{Logical; if \code{TRUE} (default), progress and warnings are printed.}
 
 \item{regularization}{Numeric. A (small) constant added to the diagonal of the Hessian if it results non invertible (default: 1e-03).}
+
+\item{max_step_halving}{Integer. Maximum number of step halving iteration if the log-likelihood decrease within the optimization iteration.}
 }
 \value{
 A list containing the control parameters to be used in the Newton-Raphson routine.

@@ -88,7 +88,7 @@ An object of class \code{"gnlmsa_fit"} with components:
 \item{vi, phi}{Dispersion predictor and fitted values.}
 \item{it}{Number of iterations used.}
 \item{maxit, tol}{Copied from \code{nr_control_params}.}
-\item{gradient, hessian}{Gradient and Hessian at convergence (free
+\item{gradient, hessian}{Gradient and Hessian at the estimated values of the parameters (free
 parameters only).}
 }
 }

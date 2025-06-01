@@ -11,24 +11,28 @@
 #' routine used in `gnlmsa` for optimization of the log-likelihood Generalized Non-Linear Models.
 #'
 #'
-#' @param maxit Integer. Maximum number of iterations (default: 1000).
-#' @param tol Numeric. Convergence tolerance on parameter updates (default: 1e-5).
+#' @param maxit Integer. Maximum number of iterations.
+#' @param tol Numeric. Convergence tolerance on relative log-likelihood increase.
 #' @param expected Logical; if \code{TRUE}, the expected Fisher information is used in the optimization process.
 #'   If \code{FALSE} (default), the observed Hessian is used.
 #' @param unconstrained Logical; if \code{TRUE}, the optimization is performed in the unconstrained space (for detail see [`make_map_function()`] and [`reparametrize()`].
 #'   If \code{FALSE} (default), the observed Hessian is the original parameter space.
 #' @param verbose Logical; if \code{TRUE} (default), progress and warnings are printed.
-#' @param regularization Numeric. A (small) constant added to the diagonal of the Hessian if it results non invertible (default: 1e-03).
+#' @param regularization Numeric. A (small) constant added to the diagonal of the Hessian if it results non invertible.
+#' @param max_step_halving Integer. Maximum number of step halving iteration if the log-likelihood decrease within the optimization iteration.
+#' @param max_decr Integer. Maximum number of iterations with decreasing log-likelihood before stopping the algorithm.
 #' @return A list containing the control parameters to be used in the Newton-Raphson routine.
 #'
 #'
 #' @export
 nr_control <- function(maxit = 100,
-                       tol = 1e-05,
+                       tol = 1e-06,
                        expected = FALSE,
                        unconstrained = TRUE,
                        verbose = TRUE,
-                       regularization = 1e-03) {
+                       regularization = 1e-03,
+                       max_step_halving = 1000,
+                       max_decr = 10) {
 
   list(
     maxit = maxit,
@@ -36,7 +40,9 @@ nr_control <- function(maxit = 100,
     expected = expected,
     unconstrained = unconstrained,
     verbose = verbose,
-    regularization = regularization
+    regularization = regularization,
+    max_step_halving = max_step_halving,
+    max_decr = max_decr
   )
 
 }
@@ -166,6 +172,8 @@ gnlmsa_fit <- function(y, X, Z, family,
   unconstrained <- nr_control_params$unconstrained
   verbose <- nr_control_params$verbose
   reg <- nr_control_params$regularization
+  max_step_halving <- nr_control_params$max_step_halving
+  max_decr <- nr_control_params$max_decr
 
   one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
 
@@ -231,7 +239,7 @@ gnlmsa_fit <- function(y, X, Z, family,
   phi0 <- linkinv_phi(vi0)
 
   l0 <- sum(loglik(y, mu0, phi0))
-  dev <- rep(2, length(par0))
+  dev <- 2
   it <- 0
   par1 <- numeric(npar)
   par1[fixed_position] <- fixed_values
@@ -266,7 +274,9 @@ gnlmsa_fit <- function(y, X, Z, family,
         sep = "")
   }
 
-  while ((any(dev > tol)) && it <= maxit) {
+  n_decr <- 0
+
+  while ((dev > tol) && (it <= maxit)) {
 
     it <- it + 1
 
@@ -293,8 +303,51 @@ gnlmsa_fit <- function(y, X, Z, family,
 
     l1 <- sum(loglik(y, mu1, phi1))
 
-    dev <- abs(par1 - par0)
-    check <- l1 - l0 > 0
+    check <- l1 > l0
+
+    i <- 0
+    if (!check) {
+
+      par1_or <- par1
+      l1_or <- l1
+
+      for(i in 1:max_step_halving) {
+
+        if (unconstrained) {
+          par1[free_par] <- invert(map(par0[free_par]) - step*(0.5^i))
+        } else {
+          par1[free_par] <- par0[free_par] - step*(0.5^i)
+        }
+
+        beta1 <- par1[1:npar_mu]
+        gamma1 <- par1[(npar_mu + 1):npar]
+
+        eta1 <- drop(f_mu(X, beta1))
+        mu1 <- linkinv_mu(eta1)
+
+        vi1 <- drop(f_phi(Z, gamma1))
+        phi1 <- linkinv_phi(vi1)
+
+        l1 <- sum(loglik(y, mu1, phi1))
+
+        if(l1 > l0) {
+          break
+        }
+
+        if (i == max_step_halving) {
+          par1 <- par1_or
+          l1 <- l1_or
+        }
+
+
+      }
+
+    }
+
+    dev_par <- abs((par1 - par0)/par0)
+    dev_ll <- abs((l1 - l0)/l0)
+    dev <- (max(dev_par) + dev_ll)/2
+    decr <- l1 < l0
 
     par0 <- par1
     beta0 <- beta1
@@ -321,9 +374,21 @@ gnlmsa_fit <- function(y, X, Z, family,
     if (verbose) {
       cat("iter: ", it,
           ", loglik: ", l0, if(!check) " (decreased!)",
+          ", step halving iterations: ", i,
           ", mean abs. grad.: ", mean(abs(g[free_par])),
+          ", conv. crit. : ", dev,
           "\n",
           sep = "")
+    }
+
+    if (decr) {
+      n_decr <- n_decr + 1
+    } else {
+      n_decr <- 0
+    }
+
+    if (n_decr == max_decr) {
+      break
     }
 
   }
