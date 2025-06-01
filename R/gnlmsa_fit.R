@@ -246,6 +246,11 @@ gnlmsa_fit <- function(y, X, Z, family,
 
   lower <- c(lower_mu, lower_phi)[free_par]
   upper <- c(upper_mu, upper_phi)[free_par]
+
+  if (all(is.infinite(c(lower, upper)))) {
+    unconstrained <- FALSE
+  }
+
   map_functions <- make_map_function(lower, upper)
   map <- map_functions$map
   invert <- map_functions$invert
