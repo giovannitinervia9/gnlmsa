@@ -22,7 +22,8 @@
 #' @param restart_if_stuck Integer. Number of consecutive iterations without improvement after which
 #'   the algorithm restarts from the last best parameter vector. Helps escape local optima.
 #' @param save_history Logical. If \code{TRUE}, the full parameter and log-likelihood trajectory is stored.
-#'
+#' @param expected Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.
+#' @param verbose Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.
 #' @return A list of class `"sa_control"` containing the control parameters to be used in the SA routine.
 #'
 #' @details
@@ -37,7 +38,9 @@ sa_control <- function(iterations = 1000,
                        update_v = FALSE,
                        compute_v = floor(iterations*0.3),
                        restart_if_stuck = floor(iterations*0.3),
-                       save_history = FALSE
+                       save_history = FALSE,
+                       expected = TRUE,
+                       verbose = TRUE
 ) {
 
   if (compute_v > iterations) {
@@ -55,7 +58,9 @@ sa_control <- function(iterations = 1000,
        update_v = update_v,
        compute_v = compute_v,
        restart_if_stuck = restart_if_stuck,
-       save_history = save_history)
+       save_history = save_history,
+       expected = expected,
+       verbose = verbose)
 }
 
 
@@ -92,8 +97,6 @@ sa_control <- function(iterations = 1000,
 #' @param mult Multipliers for the proposal variance in the SA algorithm.
 #' @param nsim Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).
 #' @param sa_control_params A list of control parameters for the SA routine, as returned by [sa_control()].
-#' @param expected Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.
-#' @param verbose Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.
 #'
 #' @details
 #' The SA algorithm operates on a transformed parameter space: all constrained parameters are mapped
@@ -117,6 +120,8 @@ sa_control <- function(iterations = 1000,
 #'   \item{history}{Optional. Vector of log-likelihood values at each iteration, if \code{save_history = TRUE}.}
 #'   \item{control}{Control parameters used during optimization.}
 #'   \item{map_functions}{List of mapping functions used to transform bounded to unbounded parameters.}
+#'   \item{gradient, hessian}{Gradient and Hessian at the estimated values of the parameters (free
+#'         parameters only).}
 #' }
 #'
 #'
@@ -193,8 +198,7 @@ sa_control <- function(iterations = 1000,
 #'                f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
 #'                beta_start = beta_start, lower_mu = lower_mu, upper_mu = upper_mu,
 #'                gamma_start = gamma_start, lower_phi = lower_phi, upper_phi = upper_phi,
-#'                mult = mult, nsim = nsim, sa_control_params = sa_control_list,
-#'                expected = expected, verbose = verbose)
+#'                mult = mult, nsim = nsim, sa_control_params = sa_control_list)
 #'
 #' fit1
 #' }
@@ -210,8 +214,7 @@ sa_fit <- function (y, X, Z, family,
                     beta_start, lower_mu, upper_mu,
                     gamma_start, lower_phi, upper_phi,
                     fixed_params = NULL,
-                    mult, nsim, sa_control_params = sa_control(),
-                    expected = TRUE, verbose = TRUE) {
+                    mult, nsim, sa_control_params = sa_control()) {
 
   if(length(lower_mu) != length(upper_mu)) stop("lower_mu and upper_mu must have the same length")
   if(length(lower_phi) != length(upper_phi)) stop("lower_phi and upper_phi must have the same length")
@@ -292,7 +295,8 @@ sa_fit <- function (y, X, Z, family,
   iter_compute_v <- which(seq_len(sa_iterations) %% sa_compute_v == 0)
   restart_if_stuck <- sa_control_params$restart_if_stuck
   save_history <- sa_control_params$save_history
-
+  verbose <- sa_control_params$verbose
+  expected <- sa_control_params$expected
 
   par0_con <- c(beta_start, gamma_start)
   par0_unc <- par1_con <- par1_unc <- numeric(npar)
@@ -443,6 +447,20 @@ sa_fit <- function (y, X, Z, family,
   mu_best <- linkinv_mu(eta_best)
   phi_best <- linkinv_phi(vi_best)
 
+  g_mu <- grad_mu(y, X, beta_best, mu_best, eta_best, phi_best, f_mu, J_mu, mu.eta, variance)
+  g_phi <- grad_phi(y, Z, gamma_best, phi_best, vi_best, mu_best, f_phi, J_phi, phi.vi)
+  g <- c(g_mu, g_phi)[free_par]
+
+  h_mu <- hess_mu(y, X, beta_best, mu_best, eta_best, phi_best, f_mu, J_mu, H_mu, mu.eta, mu2.eta2,
+                  variance, expected)
+  h_phi <- hess_phi(y, Z, gamma_best, phi_best, vi_best, mu_best, f_phi, J_phi, H_phi, phi.vi,
+                    phi2.vi2, expected)
+  h_mu_phi <- hess_mu_phi(y, X, Z, beta_best, gamma_best, mu_best, eta_best, phi_best, vi_best, f_mu, J_mu,
+                          f_phi, J_phi, mu.eta, phi.vi, expected)
+  h <- hess(h_mu, h_phi, h_mu_phi)[free_par, free_par]
+
+
+
   out <- list(par = par_best,
               beta = beta_best,
               gamma = gamma_best,
@@ -454,7 +472,9 @@ sa_fit <- function (y, X, Z, family,
               iterations = sa_iterations,
               history = NULL,
               control = sa_control_params,
-              map_functions = map_functions)
+              map_functions = map_functions,
+              gradient = g,
+              hessian = h)
 
   if (save_history) {
     out$history <- loglik_history

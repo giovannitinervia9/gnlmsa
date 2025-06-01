@@ -11,7 +11,9 @@ sa_control(
   update_v = FALSE,
   compute_v = floor(iterations * 0.3),
   restart_if_stuck = floor(iterations * 0.3),
-  save_history = FALSE
+  save_history = FALSE,
+  expected = TRUE,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -30,6 +32,10 @@ for proposal generation is updated. Default is every 30\% of total iterations.}
 the algorithm restarts from the last best parameter vector. Helps escape local optima.}
 
 \item{save_history}{Logical. If \code{TRUE}, the full parameter and log-likelihood trajectory is stored.}
+
+\item{expected}{Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.}
+
+\item{verbose}{Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.}
 }
 \value{
 A list of class \code{"sa_control"} containing the control parameters to be used in the SA routine.

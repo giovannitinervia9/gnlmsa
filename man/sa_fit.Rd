@@ -24,9 +24,7 @@ sa_fit(
   fixed_params = NULL,
   mult,
   nsim,
-  sa_control_params = sa_control(),
-  expected = TRUE,
-  verbose = TRUE
+  sa_control_params = sa_control()
 )
 }
 \arguments{
@@ -73,10 +71,6 @@ sa_fit(
 \item{nsim}{Number of independent SA chains to run (for potential parallelization; currently only 1 is supported).}
 
 \item{sa_control_params}{A list of control parameters for the SA routine, as returned by \code{\link[=sa_control]{sa_control()}}.}
-
-\item{expected}{Logical; if \code{TRUE}, the expected (Fisher) information matrix is used to update the proposal variance.}
-
-\item{verbose}{Logical; if \code{TRUE}, prints algorithm progress every 100 iterations.}
 }
 \value{
 A list of class \code{"sa"} with elements:
@@ -181,8 +175,7 @@ fit1 <- sa_fit(y = y, X = X, Z = Z, family = family,
                f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
                beta_start = beta_start, lower_mu = lower_mu, upper_mu = upper_mu,
                gamma_start = gamma_start, lower_phi = lower_phi, upper_phi = upper_phi,
-               mult = mult, nsim = nsim, sa_control_params = sa_control_list,
-               expected = expected, verbose = verbose)
+               mult = mult, nsim = nsim, sa_control_params = sa_control_list)
 
 fit1
 }

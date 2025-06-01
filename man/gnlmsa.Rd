@@ -14,11 +14,8 @@ gnlmsa(
   mult = 1,
   nsim = 1,
   sa_control_params = sa_control(),
+  nr_control_params = nr_control(),
   fixed_params = NULL,
-  maxit = 100,
-  tol = 1e-05,
-  expected = TRUE,
-  verbose = TRUE,
   beta_names,
   gamma_names
 )
@@ -61,19 +58,13 @@ following components:
 
 \item{sa_control_params}{A list of Simulated Annealing options created via \code{\link[=sa_control]{sa_control()}}.}
 
+\item{nr_control_params}{A list of Newton-Raphson options created via \code{\link[=nr_control]{nr_control()}}.}
+
 \item{fixed_params}{A list containing two numeric vectors of the same length:
 \itemize{
 \item The first vector specifies the indices of the parameters to be fixed.
 \item The second vector provides the corresponding fixed values for those parameters.
 }}
-
-\item{maxit}{Maximum number of Newton-Raphson iterations.}
-
-\item{tol}{Tolerance for convergence in Newton-Raphson.}
-
-\item{expected}{Logical; use the expected (TRUE) or observed (FALSE) Hessian.}
-
-\item{verbose}{Logical; print progress during Simulated Annealing.}
 
 \item{beta_names}{(Optional) Names of the parameters in the mean component.}
 

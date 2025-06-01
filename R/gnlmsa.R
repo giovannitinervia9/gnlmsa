@@ -1,3 +1,10 @@
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
 #' Fit a Generalized Non-Linear Model with Mean and Dispersion Components
 #'
 #' Fits a Generalized Non-Linear Model (GNLM) by combining global optimization via Simulated Annealing
@@ -36,13 +43,10 @@
 #' @param mult Proposal scaling factor for the Simulated Annealing algorithm.
 #' @param nsim Number of independent Simulated Annealing simulations (currently only 1 is supported).
 #' @param sa_control_params A list of Simulated Annealing options created via [sa_control()].
+#' @param nr_control_params A list of Newton-Raphson options created via [nr_control()].
 #' @param fixed_params A list containing two numeric vectors of the same length:
 #'   - The first vector specifies the indices of the parameters to be fixed.
 #'   - The second vector provides the corresponding fixed values for those parameters.
-#' @param maxit Maximum number of Newton-Raphson iterations.
-#' @param tol Tolerance for convergence in Newton-Raphson.
-#' @param expected Logical; use the expected (TRUE) or observed (FALSE) Hessian.
-#' @param verbose Logical; print progress during Simulated Annealing.
 #' @param beta_names (Optional) Names of the parameters in the mean component.
 #' @param gamma_names (Optional) Names of the parameters in the dispersion component.
 #'
@@ -64,6 +68,10 @@
 #'   \item{family}{The `family_gnlmsa` object used.}
 #'   \item{X, Z, y}{Original data matrices and response vector.}
 #'   \item{one_parameter}{Logical indicating wether the family of the object is a one parameter family.}
+#'   \item{gradient, hessian}{Gradient and Hessian at the estimated values of the parameters (free
+#'         parameters only).}
+#'   \item{nr}{The object returned from `gnlmsa_fit()` function.}
+#'   \item{sa}{The object returned from `sa_fit()` function.}
 #' }
 #' @export
 #' @importFrom stats var
@@ -78,9 +86,8 @@
 gnlmsa <- function (y, mean_model, beta_start,
                     family = gnlmsa_gaussian(), dispersion_model = NULL, gamma_start,
                     mult = 1, nsim = 1, sa_control_params = sa_control(),
+                    nr_control_params = nr_control(),
                     fixed_params = NULL,
-                    maxit = 100, tol = 1e-05,
-                    expected = TRUE, verbose = TRUE,
                     beta_names, gamma_names) {
 
   one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
@@ -141,16 +148,16 @@ gnlmsa <- function (y, mean_model, beta_start,
                beta_start = beta_start, lower_mu = lower_mu, upper_mu = upper_mu,
                gamma_start = gamma_start, lower_phi = lower_phi, upper_phi = upper_phi,
                fixed_params = fixed_params,
-               mult = mult, nsim = nsim, sa_control_params = sa_control_params,
-               expected = expected, verbose = verbose)
+               mult = mult, nsim = nsim, sa_control_params = sa_control_params)
 
   nr <- tryCatch(gnlmsa_fit(y = y, X = X, Z = Z, family = family,
                             f_mu = f_mu, J_mu = J_mu,
                             H_mu = H_mu,
                             f_phi = f_phi, J_phi = J_phi, H_phi = H_phi,
-                            beta_start = sa$beta, gamma_start = sa$gamma,
+                            beta_start = sa$beta, lower_mu = lower_mu, upper_mu = upper_mu,
+                            gamma_start = sa$gamma, lower_phi = lower_phi, upper_phi = upper_phi,
                             fixed_params = fixed_params,
-                            maxit = 100, tol = 1e-05, expected = TRUE),
+                            nr_control_params = nr_control_params),
                  error = function(e) "FAILED")
 
   if (!inherits(nr, "gnlmsa_fit")) {
@@ -233,7 +240,11 @@ gnlmsa <- function (y, mean_model, beta_start,
               lower = lower,
               upper = upper,
               fixed_params = fixed_params,
-              one_parameter = one_parameter)
+              one_parameter = one_parameter,
+              gradient = fit$gradient,
+              hessian = fit$hessian,
+              nr = nr,
+              sa = sa)
   class(out) <- "gnlmsa"
 
   out

@@ -16,11 +16,13 @@ gnlmsa_fit(
   J_phi,
   H_phi,
   beta_start,
+  lower_mu,
+  upper_mu,
   gamma_start,
+  lower_phi,
+  upper_phi,
   fixed_params = NULL,
-  maxit = 100,
-  tol = 1e-05,
-  expected = TRUE
+  nr_control_params = nr_control()
 )
 }
 \arguments{
@@ -30,67 +32,87 @@ gnlmsa_fit(
 
 \item{Z}{Design matrix for the dispersion component.}
 
-\item{family}{A \code{\link{family_gnlmsa}} object defining the distribution, link functions, and associated derivatives.}
+\item{family}{A \code{\link{family_gnlmsa}} object defining the distribution,
+link functions and associated derivatives.}
 
-\item{f_mu}{Function computing the nonlinear predictor for the mean component.}
+\item{f_mu}{Predictor function for the mean component.}
 
-\item{J_mu}{Optional. Jacobian of \code{f_mu}.}
+\item{J_mu}{(Optional) Jacobian of \code{f_mu}. Should return an \eqn{n \times k} matrix.}
 
-\item{H_mu}{Optional. Hessian of \code{f_mu}.}
+\item{H_mu}{(Optional) Hessian of \code{f_mu}. Should return a list of \eqn{n} Hessian matrices.}
 
-\item{f_phi}{Function computing the nonlinear predictor for the dispersion component.}
+\item{f_phi}{Predictor function for the dispersion component.}
 
-\item{J_phi}{Optional. Jacobian of \code{f_phi}.}
+\item{J_phi}{(Optional) Jacobian of \code{f_phi}.}
 
-\item{H_phi}{Optional. Hessian of \code{f_phi}.}
+\item{H_phi}{(Optional) Hessian of \code{f_phi}.}
 
-\item{beta_start}{Initial values for the parameters of the mean component.}
+\item{beta_start}{Initial values for parameters of the mean component.}
 
-\item{gamma_start}{Initial values for the parameters of the dispersion component.}
+\item{lower_mu}{Numeric vector defining lower bounds for the mean parameters.}
 
-\item{fixed_params}{A list containing two numeric vectors of the same length:
+\item{upper_mu}{Numeric vector defining upper bounds for the mean parameters.}
+
+\item{gamma_start}{Initial values for parameters of the dispersion component.}
+
+\item{lower_phi}{Numeric vector defining lower bounds for the dispersion parameters.}
+
+\item{upper_phi}{Numeric vector defining upper bounds for the dispersion parameters.}
+
+\item{fixed_params}{Optional list of two numeric vectors.  The first gives
+the indices of parameters to be fixed, the second the
+corresponding fixed values.}
+
+\item{nr_control_params}{A list of control settings created by
+\code{\link[=nr_control]{nr_control()}}.  Defaults to \code{nr_control()}.  The list
+elements are:
 \itemize{
-\item The first vector specifies the indices of the parameters to be fixed.
-\item The second vector provides the corresponding fixed values for those parameters.
+\item \code{maxit} – maximum NR iterations.
+\item \code{tol} – convergence tolerance.
+\item \code{expected} – logical; use expected (Fisher)
+information when \code{TRUE}.
+\item \code{unconstrained} – logical; optimise in the
+unconstrained space when \code{TRUE}.
+\item \code{verbose} – logical; print progress messages.
+\item \code{regularization} – diagonal ridge added when the
+Hessian is singular.
 }}
-
-\item{maxit}{Integer. Maximum number of iterations (default: 100).}
-
-\item{tol}{Numeric. Convergence tolerance on parameter updates (default: 1e-5).}
-
-\item{expected}{Logical; if \code{TRUE} (default), the expected (Fisher) information is used for the Hessian.
-If \code{FALSE}, the observed Hessian is used.}
 }
 \value{
-A list of class \code{"gnlmsa_fit"} with the following components:
+An object of class \code{"gnlmsa_fit"} with components:
 \describe{
-\item{beta}{Estimated coefficients for the mean component.}
-\item{gamma}{Estimated coefficients for the dispersion component.}
-\item{loglik}{Final value of the log-likelihood.}
-\item{eta}{Predictor for the mean component, \eqn{\hat{\eta}}.}
-\item{mu}{Fitted values for the mean, \eqn{\hat{\mu} = g^{-1}(\hat{\eta})}.}
-\item{vi}{Predictor for the dispersion component, \eqn{\hat{v}}.}
-\item{phi}{Fitted dispersion values, \eqn{\hat{\phi} = h^{-1}(\hat{v})}.}
-\item{it}{Number of iterations performed.}
-\item{maxit}{Maximum number of iterations allowed.}
-\item{tol}{Convergence tolerance used.}
+\item{beta}{Estimated mean-component coefficients.}
+\item{gamma}{Estimated dispersion-component coefficients.}
+\item{loglik}{Final log-likelihood.}
+\item{eta, mu}{Mean predictor and fitted values.}
+\item{vi, phi}{Dispersion predictor and fitted values.}
+\item{it}{Number of iterations used.}
+\item{maxit, tol}{Copied from \code{nr_control_params}.}
+\item{gradient, hessian}{Gradient and Hessian at convergence (free
+parameters only).}
 }
 }
 \description{
-Estimates the parameters of a Generalized Non-Linear Model (GNLM) using a full Newton–Raphson optimization routine.
-The algorithm jointly estimates both the mean and dispersion components by iteratively updating the parameter vector
-based on the gradient (score) and the Hessian of the log-likelihood.
-}
-\details{
-Arbitrary non-linear predictors may be supplied for both the mean and dispersion components, with optional
-user-provided Jacobians and Hessians to improve convergence.
+Estimates the parameters of a Generalized Non-Linear Model (GNLM) by a full
+Newton–Raphson (NR) routine.  The algorithm jointly updates the mean and
+dispersion components using the gradient (score) and Hessian of the
+log-likelihood. Arbitrary non-linear predictors may be supplied for both
+components, with optional user-provided Jacobians and Hessians to improve
+convergence.
 }
 \section{Details}{
 
-Iterations continue until the absolute change in all parameters is less than \code{tol},
-or until \code{maxit} iterations have been performed.
-If the log-likelihood decreases between iterations, a warning is issued, but the algorithm continues from the current point.
-All distribution-specific functions (link, variance, score, Hessians, log-likelihood) must be supplied via a \code{\link{family_gnlmsa}} object.
+Iterations stop when the absolute change in every parameter is below
+\code{nr_control_params$tol} or when \code{nr_control_params$maxit} iterations have
+been reached.  If the log-likelihood decreases between successive iterations
+a warning is issued, but the algorithm continues.  All distribution-specific
+functions (link, variance, score, Hessians, log-likelihood) must be provided
+through a \code{\link{family_gnlmsa}} object.
+
+The behaviour of the NR algorithm (maximum iterations, convergence
+tolerance, whether to work in an unconstrained space, etc.) is governed by
+the list returned by \code{\link[=nr_control]{nr_control()}}.  See \code{?nr_control} for a full
+description of each option.
 }
 
 \examples{
@@ -99,20 +121,25 @@ y <- productivity$Y
 X <- as.matrix(productivity[, -1])
 Z <- cbind(1, prcomp(scale(X))$x[, 1])
 
-sa <- sa_fit(y = y, X = X, Z = Z, family = gnlmsa_Gamma("identity"),
-             f_mu = cobb_douglas()$f, J_mu = cobb_douglas()$J,
-             H_mu = cobb_douglas()$H,
-             f_phi = Linear()$f, J_phi = Linear()$J, H_phi = Linear()$H,
-             beta_start = rep(1, 3), lower_mu = rep(0, 3), upper_mu = rep(Inf, 3),
-             gamma_start = c(10, 0), lower_phi = rep(-Inf, 2), upper_phi = rep(Inf, 2),
-             mult = 1, nsim = 1, sa_control = sa_control(10000), expected = TRUE,
-             verbose = TRUE)
+# Simulated–annealing warm start
+sa <- sa_fit(
+  y = y, X = X, Z = Z,
+  family   = gnlmsa_Gamma("identity"),
+  f_mu     = cobb_douglas()$f, J_mu = cobb_douglas()$J, H_mu = cobb_douglas()$H,
+  f_phi    = Linear()$f,      J_phi = Linear()$J,      H_phi = Linear()$H,
+  beta_start  = rep(1, 3), gamma_start = c(10, 0),
+  mult = 1, nsim = 1,
+  sa_control = sa_control(10000),
+  expected   = TRUE, verbose = TRUE
+)
 
-gnlmsa_fit(y = y, X = X, Z = Z, family = gnlmsa_Gamma("identity"),
-           f_mu = cobb_douglas()$f, J_mu = cobb_douglas()$J,
-           H_mu = cobb_douglas()$H,
-           f_phi = Linear()$f, J_phi = Linear()$J, H_phi = Linear()$H,
-           beta_start = sa$beta, gamma_start = sa$gamma,
-           maxit = 100, tol = 1e-05, expected = TRUE)
+gnlmsa_fit(
+  y = y, X = X, Z = Z,
+  family = gnlmsa_Gamma("identity"),
+  f_mu   = cobb_douglas()$f, J_mu = cobb_douglas()$J, H_mu = cobb_douglas()$H,
+  f_phi  = Linear()$f,       J_phi = Linear()$J,      H_phi = Linear()$H,
+  beta_start  = sa$beta, gamma_start = sa$gamma,
+  nr_control_params = nr_control(maxit = 100, tol = 1e-5, expected = TRUE)
+)
 }
 }
