@@ -376,8 +376,8 @@ gnlmsa_fit <- function(y, X, Z, family,
 
     if (verbose) {
       cat("iter: ", it,
-          ", loglik: ", l0, if(!check) " (decreased!)",
-          ", step halving iterations: ", i,
+          ", loglik: ", l0,
+          if (!check) paste0(", step halving iterations: ", i),
           ", mean abs. grad.: ", mean(abs(g[free_par])),
           ", conv. crit. : ", dev,
           "\n",
