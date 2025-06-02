@@ -347,9 +347,9 @@ gnlmsa_fit <- function(y, X, Z, family,
 
     }
 
-    dev_par <- abs((par1 - par0)/par0)
-    dev_ll <- abs((l1 - l0)/l0)
-    dev <- (max(dev_par) + dev_ll)/2
+    dev_par <- abs((par1 - par0))
+    dev_ll <- abs((l1 - l0))/abs(l0)
+    dev <- max(dev_par) + dev_ll
     decr <- l1 < l0
 
     par0 <- par1
