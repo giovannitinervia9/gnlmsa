@@ -562,11 +562,14 @@ sample_par <- function(par, v, mult = 1, npar = length(par)){
   # if(!isSymmetric(v)) stop("v must be a symmetric matrix")
   if(nrow(v) != npar) stop("dimension of variance-covariance matrix and par must coincide")
   if(length(mult) != 1 & length(mult) != npar) stop("mult must be of dimension 1 or npar")
+
+
   eps <- tryCatch(c(mvtnorm::rmvnorm(1, sigma = v)),
-                  error = function(e) {
-                    stats::rnorm(npar, mean = 0, sd = sqrt(diag(v)))
-                  }
-  )
+                    error = function(e) {
+                      stats::rnorm(npar, mean = 0, sd = sqrt(diag(v)))
+                    }
+    )
+
   par + mult*eps
 }
 

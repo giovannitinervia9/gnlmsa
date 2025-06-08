@@ -8,6 +8,7 @@ sa_control(
   iterations = 1000,
   initial_temperature = 100,
   final_temperature = 1,
+  chol = T,
   update_v = FALSE,
   compute_v = floor(iterations * 0.3),
   restart_if_stuck = floor(iterations * 0.3),
@@ -22,6 +23,8 @@ sa_control(
 \item{initial_temperature}{Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.}
 
 \item{final_temperature}{Numeric. Final value of the temperature at which the cooling schedule stops.}
+
+\item{chol}{Logical. If \code{TRUE}, sampling is performed using the Cholesky decomposition of v, otherwhise \code{mvtnorm::rmvnorm()} is used.}
 
 \item{update_v}{Logical. If \code{TRUE}, the variance covariance matrix of the sampler is updated. Default is \code{FALSE}.}
 

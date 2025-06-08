@@ -16,6 +16,7 @@
 #' @param iterations Integer. Total number of iterations for the Simulated Annealing algorithm.
 #' @param initial_temperature Numeric. Initial value of the temperature. Should be strictly greater than \code{final_temperature}.
 #' @param final_temperature Numeric. Final value of the temperature at which the cooling schedule stops.
+#' @param chol Logical. If \code{TRUE}, sampling is performed using the Cholesky decomposition of v, otherwhise `mvtnorm::rmvnorm()` is used.
 #' @param update_v Logical. If \code{TRUE}, the variance covariance matrix of the sampler is updated. Default is \code{FALSE}.
 #' @param compute_v Integer. Number of iterations after which the variance-covariance matrix used
 #'   for proposal generation is updated. Default is every 30% of total iterations.
@@ -35,6 +36,7 @@
 sa_control <- function(iterations = 1000,
                        initial_temperature = 100,
                        final_temperature = 1,
+                       chol = T,
                        update_v = FALSE,
                        compute_v = floor(iterations*0.3),
                        restart_if_stuck = floor(iterations*0.3),
@@ -55,6 +57,7 @@ sa_control <- function(iterations = 1000,
   list(iterations = iterations,
        initial_temperature = initial_temperature,
        final_temperature = final_temperature,
+       chol = chol,
        update_v = update_v,
        compute_v = compute_v,
        restart_if_stuck = restart_if_stuck,
@@ -290,6 +293,7 @@ sa_fit <- function (y, X, Z, family,
 
 
   sa_iterations <- sa_control_params$iterations
+  use_chol <- sa_control_params$chol
   sa_compute_v <- sa_control_params$compute_v
   sa_update_v <- sa_control_params$update_v
   iter_compute_v <- which(seq_len(sa_iterations) %% sa_compute_v == 0)
@@ -324,6 +328,10 @@ sa_fit <- function (y, X, Z, family,
   v <- diag(1e-03, npar_free)
   j <- diag(jacobian(par0_con))[free_par, free_par]
   v <- j%*%v%*%t(j)
+  if (use_chol) {
+    L <- chol(v)
+  }
+
 
 
   l_best <- l0
@@ -377,13 +385,17 @@ sa_fit <- function (y, X, Z, family,
 
         j <- diag(jacobian(par0_con))[free_par, free_par]
         v <- j%*%v%*%t(j)
-
+        if (use_chol) {
+          L <- chol(v)
+        }
       }
     }
 
-
-
-    par1_unc[free_par] <- sample_par(par0_unc[free_par], v, mult, npar_free)
+    if (use_chol) {
+      par1_unc[free_par] <- par0_unc[free_par] + mult*drop(L%*%rnorm(npar_free))
+    } else {
+      par1_unc[free_par] <- sample_par(par0_unc[free_par], v, mult, npar_free)
+    }
     par1_con[free_par] <- invert(par1_unc[free_par])
 
     if (fixed) {
