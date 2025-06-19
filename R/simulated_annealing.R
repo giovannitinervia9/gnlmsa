@@ -460,10 +460,10 @@ sa_fit <- function (y, X, Z, family,
 
   beta_best <- par_best[1:npar_mu]
   gamma_best <- par_best[(npar_mu + 1):npar]
-  eta_best <- f_mu(X, beta_best)
-  vi_best <- f_phi(Z, gamma_best)
-  mu_best <- linkinv_mu(eta_best)
-  phi_best <- linkinv_phi(vi_best)
+  eta_best <- drop(f_mu(X, beta_best))
+  vi_best <- drop(f_phi(Z, gamma_best))
+  mu_best <- drop(linkinv_mu(eta_best))
+  phi_best <- drop(linkinv_phi(vi_best))
 
   g_mu <- grad_mu(y, X, beta_best, mu_best, eta_best, phi_best, f_mu, J_mu, mu.eta, variance)
   g_phi <- grad_phi(y, Z, gamma_best, phi_best, vi_best, mu_best, f_phi, J_phi, phi.vi)

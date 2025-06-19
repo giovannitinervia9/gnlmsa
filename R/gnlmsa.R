@@ -91,6 +91,11 @@ gnlmsa <- function (y, mean_model, beta_start,
                     beta_names, gamma_names) {
 
   one_parameter <- family$family %in% c("gnlmsa_poisson", "gnlmsa_binomial")
+  is_binomial <- family$family %in% c("gnlmsa_binomial")
+
+  if (is_binomial) {
+    y <- build_binomial(y)
+  }
 
   nobs <- NROW(y)
 

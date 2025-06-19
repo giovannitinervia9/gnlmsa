@@ -575,8 +575,32 @@ sample_par <- function(par, v, mult = 1, npar = length(par)){
 
 
 
+#-------------------------------------------------------------------------------
 
 
+
+#' Helper functions for binomial models
+#'
+#' @param y A two-levels factor or a vector containing only 0 and 1 values.
+#'
+#' @returns A vector containing only 0 and 1 values.
+#' @export
+build_binomial <- function(y) {
+  if (is.factor(y)) {
+    if (nlevels(y) != 2) {
+      stop("y must be a two-level factor for binomial family")
+    }
+    y <- as.integer(y) - 1
+  } else {
+    if (is.matrix(y)) {
+      y <- drop(y[, 1])
+    }
+    if (!all(y %in% 0:1)) {
+      stop("all y must be 0 or 1")
+    }
+  }
+  y
+}
 
 
 

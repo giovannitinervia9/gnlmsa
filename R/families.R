@@ -755,3 +755,195 @@ gnlmsa_poisson <- function(link_mu = "log"){
   class(out) <- c("family_poisson", "family")
   out
 }
+
+
+
+#-------------------------------------------------------------------------------
+
+
+
+#' Binomial Family for Generalized Non-Linear Models
+#'
+#' Constructs a `family_gnlmsa` object for use with Binomial-distributed response variables in
+#' Generalized Non-Linear Models (GNLMs). In the Binomial model the \eqn{\phi} parameter is fixed to be 1.
+#'
+#' @param link_mu A character string specifying the link function for the mean component \eqn{\mu}.
+#'
+#' @return An object of class `family_gnlmsa` (inheriting from `family`) with the following components:
+#' \describe{
+#'   \item{family}{Name of the family: `"gnlmsa_binomial"`}
+#'
+#'   \item{link_mu}{Name of the link function used for the mean.}
+#'   \item{linkfun_mu}{Function mapping \eqn{\mu} to the predictor \eqn{\eta}.}
+#'   \item{linkinv_mu}{Inverse of the link function, mapping \eqn{\eta} to \eqn{\mu}.}
+#'   \item{mu.eta}{First derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{mu2.eta2}{Second derivative of \eqn{\mu} with respect to \eqn{\eta}.}
+#'   \item{validmu}{Validator function for the mean: checks positivity and finiteness.}
+#'
+#'   \item{link_phi}{Name of the link function used for the dispersion.}
+#'   \item{linkfun_phi}{Function mapping \eqn{\phi} to the predictor \eqn{v}.}
+#'   \item{linkinv_phi}{Inverse of the link function, mapping \eqn{v} to \eqn{\phi}.}
+#'   \item{phi.vi}{First derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{phi2.vi2}{Second derivative of \eqn{\phi} with respect to \eqn{v}.}
+#'   \item{validphi}{Validator function for the dispersion: checks positivity and finiteness.}
+#'
+#'   \item{variance}{Function defining the conditional variance: \eqn{Var(Y_i \mid \mu_i, \phi_i) = \mu_i(1 - \mu_i)}}
+#'   \item{loglik}{Log-likelihood contribution function for each observation.}
+#'   \item{grad_mu}{Gradient of the log-likelihood with respect to the mean parameters.}
+#'   \item{hess_mu}{Hessian of the log-likelihood with respect to the mean parameters.}
+#'   \item{grad_phi}{Gradient of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_phi}{Hessian of the log-likelihood with respect to the dispersion parameters.}
+#'   \item{hess_mu_phi}{Cross-derivative of the log-likelihood with respect to mean and dispersion parameters.}
+#'
+#'   \item{simulate}{Function to simulate to be called by method `simulate`.}
+#' }
+#'
+#' @details
+#' The Binomial distribution is commonly used to model count data.
+#' The pdf of the Binomial distribution is:
+#' \deqn{
+#' f(y_i; \mu_i) =
+#' \dbinom{m_i}{y_i} \mu_i^{y_i} (1 - \mu_i)^{m_i - y_i}
+#' }
+#'
+#' The log-likelihood function (summed over all observations) is:
+#' \deqn{
+#' \ell(\mu) = \sum_{i=1}^n
+#' \log \dbinom{m_i}{y_i} + y_i \log \mu_i + (m_i - y_i) \log (1 - \mu_i)
+#' }
+#'
+#' @seealso [family_gnlmsa()], [gnlmsa()].
+#' @importFrom stats rpois
+#' @export
+gnlmsa_binomial <- function(link_mu = "logit"){
+
+  link_phi <- "identity"
+
+  linktemp_mu <- substitute(link_mu)
+  linktemp_phi <- substitute(link_phi)
+
+  okLinks_mu <- c("logit", "probit", "cloglog", "cauchit", "log")
+  okLinks_phi <- c("identity")
+
+  family <- "gnlmsa_binomial"
+
+  # create link for mu
+  if (!is.character(linktemp_mu)) {linktemp_mu <- deparse(linktemp_mu)}
+  if (linktemp_mu %in% okLinks_mu) {
+    stats_mu <- make_link(linktemp_mu)
+  }
+  else if (is.character(linktemp_mu)) {
+    stats_mu <- make_link(linktemp_mu)
+    linktemp_mu <- link_mu
+  }
+  else {
+    if (inherits(link_mu, "link-glm")) {
+      stats_mu <- link_mu
+      if (!is.null(stats_mu$name))
+        linktemp_mu <- stats_mu$name
+    }
+    else {
+      stop(gettextf("link \"%s\" for mu is not available for %s family; available links are %s",
+                    linktemp_mu, family, paste(sQuote(okLinks_mu), collapse = ", ")),
+           domain = NA)
+    }
+  }
+
+
+  # create link for phi
+  if (!is.character(linktemp_phi)) {
+    linktemp_phi <- deparse(linktemp_phi)
+  }
+  if (linktemp_phi %in% okLinks_phi) {
+    stats_phi <- make_link(linktemp_phi)
+  }
+  else if (is.character(linktemp_phi)) {
+    stats_phi <- make_link(linktemp_phi)
+    linktemp_phi <- link_phi
+  }
+  else {
+    if (inherits(link_phi, "link-glm")) {
+      stats_phi <- link_phi
+      if (!is.null(stats_phi$name))
+        linktemp_phi <- stats_phi$name
+    }
+    else {
+      stop(gettextf("link \"%s\" for phi is not available for %s family; available links are %s",
+                    linktemp_phi, family, paste(sQuote(okLinks_phi), collapse = ", ")),
+           domain = NA)
+    }
+  }
+
+
+  linkfun_mu <- stats_mu$linkfun
+  linkinv_mu <- stats_mu$linkinv
+  mu.eta <- stats_mu$mu.eta
+  mu2.eta2 <- stats_mu$mu2.eta2
+
+  linkfun_phi <- stats_phi$linkfun
+  linkinv_phi <- stats_phi$linkinv
+  phi.vi <- stats_phi$mu.eta
+  phi2.vi2 <- stats_phi$mu2.eta2
+
+  variance <- function(mu, phi = 1) mu*(1 - mu)
+  validmu <- function(mu) all(mu > 0 & mu < 1)
+  validphi <- function(phi) all(is.finite(phi)) && all(phi > 0)
+  loglik <- function(y, mu, phi = 1){
+    m <- 1
+    lgamma(m + 1) - lgamma(y + 1) - lgamma(m - y + 1) + y*log(mu) + (m - y)*log(1 - mu)
+  }
+
+  grad_mu <- ef_grad_mu
+
+  hess_mu <- ef_hess_mu
+
+  grad_phi <- function(y, Z, gamma, phi = 1, vi, mu, f_phi, J_phi, phi.vi){
+    NA
+  }
+
+
+  hess_phi <- function(y, Z, gamma, phi, vi, mu, f_phi, J_phi, H_phi,
+                       phi.vi, phi2.vi2, expected = TRUE) {
+    matrix(NA)
+  }
+
+  hess_mu_phi <- function(y, X, Z, beta, gamma,
+                          mu, eta, phi, vi,
+                          f_mu, J_mu, f_phi, J_phi,
+                          mu.eta, phi.vi, expected = TRUE) {
+    matrix(NA, length(beta), 1)
+  }
+
+  simfun <- function(object, nsim) {
+    mu <- object$mu
+    rpois(nsim*length(mu), mu)
+  }
+
+
+  out <- list(family = family,
+
+              link_mu = linktemp_mu,
+              linkfun_mu = linkfun_mu,
+              linkinv_mu = linkinv_mu,
+              mu.eta = mu.eta,
+              mu2.eta2 = mu2.eta2,
+              validmu = validmu,
+
+              link_phi = linktemp_phi,
+              linkfun_phi = linkfun_phi,
+              linkinv_phi = linkinv_phi,
+              phi.vi = phi.vi,
+              phi2.vi2 = phi2.vi2,
+              validphi = validphi,
+
+              variance = variance,
+              loglik = loglik,
+              grad_mu = grad_mu,
+              hess_mu = hess_mu,
+              grad_phi = grad_phi,
+              hess_phi = hess_phi,
+              hess_mu_phi = hess_mu_phi,
+              simfun = simfun)
+  class(out) <- c("family_binomial", "family")
+  out
+}
